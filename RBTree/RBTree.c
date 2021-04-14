@@ -150,6 +150,7 @@ void leftSmallRotate(RBNode_t *Node, int *ERROR_CODE) {
     }
 
     Node->parent->left = Node->right; //Выставляем для отца левый элемент - правый сын данной ноды
+    Node->right = Node->right->left; //Выставляем указатель для ноды на правого потомка в качетсве левого для правого бывшего потомка данной ноды (хз что тут написано)
     Node->parent->left->left = Node; //Выставляем уже для потомка отца указатель на левого сына (проверяемый элемент)
     Node->parent->left->parent = Node->parent; //Указываем новых родителей
     Node->parent = Node->parent->left; //Указываем новых родителей
@@ -164,6 +165,7 @@ void rightSmallRotate(RBNode_t *Node, int *ERROR_CODE) {
     }
 
     Node->parent->right = Node->left; //Выставляем для отца правый элемент - левый сын данной ноды
+    Node->left = Node->left->right;
     Node->parent->right->right = Node; //Выставляем уже для потомка отца указатель на правую ноду - проверяемый элемент
     Node->parent->right->parent = Node->parent; //Указываем новых родителей
     Node->parent = Node->parent->right;  //Указываем новых родителей
