@@ -159,7 +159,7 @@ void rightSmallRotate(RBNode_t *Node, int *ERROR_CODE) {
 }
 
 void leftBigRotate(RBNode_t *Node, int *ERROR_CODE) {
-    RBNode_t *p = 0, *parent = 0, *tmp = 0;
+    RBNode_t *p = Node, *parent = 0, *tmp = 0;
 
     if (!Node) {
         *ERROR_CODE = 4;
@@ -176,7 +176,7 @@ void leftBigRotate(RBNode_t *Node, int *ERROR_CODE) {
     } else {
         parent = p->parent;
         p->right->parent = parent; //в качестве родителя указываем родителя данного элемента
-        if (parent->value < p->value) { //Перемещаем указатель на с данной ноды на правого потомка
+        if (parent->right == p) { //Перемещаем указатель на с данной ноды на правого потомка
             parent->right = p->right;
         } else {
             parent->left = p->right;
@@ -196,7 +196,7 @@ void leftBigRotate(RBNode_t *Node, int *ERROR_CODE) {
 }
 
 void rightBigRotate(RBNode_t *Node, int *ERROR_CODE) {
-    RBNode_t *p = 0, *parent = 0, *tmp = 0;
+    RBNode_t *p = Node, *parent = 0, *tmp = 0;
 
     if (!Node) {
         *ERROR_CODE = 4;
@@ -213,7 +213,7 @@ void rightBigRotate(RBNode_t *Node, int *ERROR_CODE) {
     } else {
         parent = p->parent;
         p->left->parent = parent; //в качестве родителя указываем родителя данного элемента
-        if (parent->value < p->value) {//Перемещаем указатель на с данной ноды на левого потомка
+        if (parent->right == p) {//Перемещаем указатель на с данной ноды на левого потомка
             parent->right = p->left;
         } else {
             parent->left = p->left;
