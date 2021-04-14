@@ -94,13 +94,16 @@ void balanceTree(RBNode_t *el, int *ERROR_CODE) { //Предпологаем, ч
         return;
     }
 
-    isLeftEl = el->parent->value > el->value ? 1 : 0;
+    isLeftEl = el->parent->left == el ? 1 : 0;
 
     if (el->parent->color) { //Если красный
         if (isLeftEl) { //Если проверяемый элемент находится слева от родителя
-            if (el->parent->parent->value < el->parent->value) { //Если дедушка проверяемого элемента находится по другую сторону
+            if (el->parent->parent->right == el->parent) { //Если дедушка проверяемого элемента находится по другую сторону
                 rightSmallRotate(el->parent, ERROR_CODE); //Вызываем правое малое вращение от родителя
                 if (*ERROR_CODE) return;
+                balanceTree(el->left, ERROR_CODE);
+                if (*ERROR_CODE) return;
+
             } else { //Если дедушка проверяемого элемента находится на одной стороне
                 if (el->parent->parent->left->color && !el->parent->parent->left) { //Если дядя проверяемого элемента красный
                     el->parent->parent->left->color = 0; //Меняем цвета на черный для дяди и для родителя
@@ -113,8 +116,10 @@ void balanceTree(RBNode_t *el, int *ERROR_CODE) { //Предпологаем, ч
                 }
             }
         } else { //Если проверяемый элемент находится справа от родителя
-            if (el->parent->parent->value > el->parent->value) { //Если дедушка проверяемого элемента находится по другую сторону
+            if (el->parent->parent->left == el->parent) { //Если дедушка проверяемого элемента находится по другую сторону
                 leftSmallRotate(el->parent, ERROR_CODE); //Вызываем левое малое вращение для родителя
+                if (*ERROR_CODE) return;
+                balanceTree(el->left, ERROR_CODE);
                 if (*ERROR_CODE) return;
             } else {
                 if (el->parent->parent->right->color && !el->parent->parent->right) { //Если дядя проверяемого элемента тоже красный
