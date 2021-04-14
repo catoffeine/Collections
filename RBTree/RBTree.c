@@ -113,7 +113,7 @@ void balanceTree(RBNode_t *el, int *ERROR_CODE) { //Предпологаем, ч
                     balanceTree(el->parent->parent, ERROR_CODE);
                     if (*ERROR_CODE) return;
                 } else { //Дядя черный (или NULL)
-                    leftBigRotate(el->parent->parent, ERROR_CODE); //Вызываем большое вращение от дедушки проверяемого элемента
+                    rightBigRotate(el->parent->parent, ERROR_CODE); //Вызываем большое вращение от дедушки проверяемого элемента
                     if (*ERROR_CODE) return;
                 }
             }
@@ -130,7 +130,7 @@ void balanceTree(RBNode_t *el, int *ERROR_CODE) { //Предпологаем, ч
                     balanceTree(el->parent->parent, ERROR_CODE);
                     if (*ERROR_CODE) return;
                 } else { //Дядя черный
-                    rightBigRotate(el->parent->parent, ERROR_CODE); //Вызываем большое вращение от дедушки проверяемого элемента
+                    leftBigRotate(el->parent->parent, ERROR_CODE); //Вызываем большое вращение от дедушки проверяемого элемента
                     if (*ERROR_CODE) return;
                 }
             }
@@ -220,6 +220,7 @@ void rightBigRotate(RBNode_t *Node, int *ERROR_CODE) {
 
     if (!p->left) {
         *ERROR_CODE = 5; //Нет левого потомка
+
         return;
     }
 
