@@ -22,6 +22,7 @@ RBNode_t * searchTree(RBNode_t *root, long long value, int *ERROR_CODE) {
 
 
 RBNode_t * addValue(RBNode_t *root, long long value, int *ERROR_CODE) {
+    printf("Input in addValue\n");
     RBNode_t *p, *next = root;
     char isLeafLeft = 0;
     if (root) {
@@ -34,7 +35,7 @@ RBNode_t * addValue(RBNode_t *root, long long value, int *ERROR_CODE) {
                 }
                 next = next->right;
             } else if (value < next->value) {
-                if (!next->right) {
+                if (!next->left) {
                     isLeafLeft = 1;
                     break;
                 }
@@ -55,7 +56,7 @@ RBNode_t * addValue(RBNode_t *root, long long value, int *ERROR_CODE) {
         newNode->right = NULL;
         newNode->left = NULL;
         newNode->parent = NULL;
-
+        printf("End of addValue\n");
         return newNode;
     }
     RBNode_t *newNode = (RBNode_t*)malloc(sizeof(RBNode_t));
@@ -75,12 +76,13 @@ RBNode_t * addValue(RBNode_t *root, long long value, int *ERROR_CODE) {
 
     balanceTree(newNode, ERROR_CODE);
     if (*ERROR_CODE) return NULL;
-
+    printf("END of addValue\n");
     return newNode;
 }
 
 
 void balanceTree(RBNode_t *el, int *ERROR_CODE) { //Предпологаем, что el->color==1 - красный
+    printf("INPUT in balanceTree\n");
     RBNode_t *p = el;
     char isLeftEl = 0;
 
@@ -134,12 +136,14 @@ void balanceTree(RBNode_t *el, int *ERROR_CODE) { //Предпологаем, ч
             }
         }
     } else {
+        printf("END balanceTree\n");
         return;
     }
 
 }
 
 void leftSmallRotate(RBNode_t *Node, int *ERROR_CODE) {
+    printf("INPUT in leftSmallRotate\n");
     if (!Node) {
         *ERROR_CODE = 4;
         return;
@@ -149,9 +153,11 @@ void leftSmallRotate(RBNode_t *Node, int *ERROR_CODE) {
     Node->parent->left->left = Node; //Выставляем уже для потомка отца указатель на левого сына (проверяемый элемент)
     Node->parent->left->parent = Node->parent; //Указываем новых родителей
     Node->parent = Node->parent->left; //Указываем новых родителей
+    printf("END of leftSmallRotate\n");
 }
 
 void rightSmallRotate(RBNode_t *Node, int *ERROR_CODE) {
+    printf("INPUT in rightSmallRotate\n");
     if (!Node) {
         *ERROR_CODE = 4;
         return;
@@ -161,9 +167,11 @@ void rightSmallRotate(RBNode_t *Node, int *ERROR_CODE) {
     Node->parent->right->right = Node; //Выставляем уже для потомка отца указатель на правую ноду - проверяемый элемент
     Node->parent->right->parent = Node->parent; //Указываем новых родителей
     Node->parent = Node->parent->right;  //Указываем новых родителей
+    printf("End of rightSmallRotate\n");
 }
 
 void leftBigRotate(RBNode_t *Node, int *ERROR_CODE) {
+    printf("INPUT in leftBigRotate\n");
     RBNode_t *p = Node, *parent = 0, *tmp = 0;
 
     if (!Node) {
@@ -198,9 +206,11 @@ void leftBigRotate(RBNode_t *Node, int *ERROR_CODE) {
     p->color = 0; //Черный (Меняем цвета перемещаемых элементов)
     p->left->color = 1; //Красный
     balanceTree(p, ERROR_CODE); //Запускаем балансировку для последнего элемента
+    printf("END of leftBigRotate\n");
 }
 
 void rightBigRotate(RBNode_t *Node, int *ERROR_CODE) {
+    printf("INPUT in rightBigRotate\n");
     RBNode_t *p = Node, *parent = 0, *tmp = 0;
 
     if (!Node) {
@@ -235,4 +245,5 @@ void rightBigRotate(RBNode_t *Node, int *ERROR_CODE) {
     p->color = 0; //Черный (Меняем цвета перемещаемых элементов)рлдр рлрддрд
     p->right->color = 1; //Красный
     balanceTree(p, ERROR_CODE); //Запускаем балансировку для последнего элемента
+    printf("END of rightBigRotate\n");
 }
