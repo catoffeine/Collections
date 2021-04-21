@@ -2,6 +2,15 @@
 #include <stdlib.h>
 #include "RBTree.h"
 
+#define RED 1
+#define BLACK 0
+
+static inline int nodeColor(RBNode_t *Node) {
+    if (!Node) return BLACK;
+    if (Node->color) return RED;
+    else return BLACK;
+}
+
 RBNode_t * searchTree(RBNode_t *root, long long value, int *ERROR_CODE) {
     RBNode_t *p = root;
     if (!root) {
@@ -82,66 +91,69 @@ RBNode_t * addValue(RBNode_t *root, long long value, int *ERROR_CODE) {
 
 void blackDeleteBalanceTree(RBNode_t *Node, int isLeft, int *ERROR_CODE) {
     RBNode_t *p = Node, *tmp = 0;
+
     if (!Node) {
         *ERROR_CODE = 5;
         return;
     }
 
+    while (Node->parent && !Node->color) {
+        if (Node == Node->parent->left) {
+            if (Node->right->color) { //Если правый потомок - красный
+                Node->right->color = BLACK;
+                Node->color = RED;
+                leftBigRotate(Node, ERROR_CODE);
+                Node = Node->parent;
+            }
 
-    // while (Node->parent && !Node->color) {
-    //     if (isLeft) {
-    //         if (Node->right->color) { //Если правый потомок - красный
-    //             Node->right->color = 0;
-    //             Node->color = 1;
-    //             leftBigRotate(Node, ERROR_CODE);
-    //             Node = Node->parent;
-    //         }
-    //
-    //         if (!Node->right->right->color && !Node->right->left->color) { //Если потомки - черные
-    //             Node->right->color = 1;
-    //         } else {
-    //             if (!Node->right->right || !Node->right->right->color) {
-    //                 if (Node->right->left) {
-    //                     Node->right->left->color = 0;
-    //                 }
-    //                 Node->right->color = 1;
-    //                 rightBigRotate(Node->right, ERROR_CODE);
-    //                 Node = Node->parent->right;
-    //             }
-    //             Node->color = Node->parent->color;
-    //             Node->parent->color = 0;
-    //             if (Node->right) Node->right->color = 0;
-    //             leftBigRotate(Node->parent, ERROR_CODE);
-    //             return;
-    //         }
-    //
-    //     } else {
-    //         if (Node->left->color) { //Если левый потомок - красный
-    //             Node->left->color = 0;
-    //             Node->color = 1;
-    //             rightBigRotate(Node, ERROR_CODE);
-    //             Node = Node->parent;
-    //         }
-    //
-    //         if (!Node->left->right->color && !Node->left->left->color) { //Если потомки - черные
-    //             Node->left->color = 1;
-    //         } else {
-    //             if (!Node->left->left->color) {
-    //                 if (Node->right->left) {
-    //                     Node->right->left->color = 0;
-    //                 }
-    //                 Node->left->color = 1;
-    //                 leftBigRotate(Node->left, ERROR_CODE);
-    //                 Node = Node->parent->left;
-    //             }
-    //             Node->color = Node->parent->color;
-    //             Node->parent->color = 0;
-    //             if (Node->left) Node->left->color = 0;
-    //             leftBigRotate(Node->parent, ERROR_CODE);
-    //             return;
-    //         }
-    //     }
-    // }
+            if (!nodeColor(Node->right->right) && !nodeColor(Node->right->left)) { //Если потомки - черные
+                Node->right->color = BLACK; //RED maybe
+                Node = Node->parent;
+            } else {
+                if (nodeColor(Node->right->left) && !nodeColor(Node->right->right)) {
+                    if (Node->right->left) Node->right->left->color = BLACK;
+                    Node->right->color = RED;
+                    tmp = Node;
+                    rightBigRotate(Node->right, ERROR_CODE);
+                    if (*ERROR_CODE) return;
+                    Node = tmp;
+                }
+                Node->right->color = Node->parent->color;
+                Node->parent->color = BLACK;
+                if (Node->right->right) Node->right->right->color = BLACK;
+                leftBigRotate(Node, ERROR_CODE);
+                return;
+            }
+
+        } else {
+            if (Node->left->color) { //Если левый потомок - красный
+                Node->left->color = BLACK;
+                Node->color = RED;
+                rightBigRotate(Node, ERROR_CODE);
+                Node = Node->parent;
+            }
+
+            if (!nodeColor(Node->left->right) && !nodeColor(Node->left->left)) { //Если потомки - черные
+                Node->left->color = BLACK; //RED maybe
+                Node = Node->parent;
+            } else {
+                if (nodeColor(Node->left->left) && !nodeColor(Node->left->right)) {
+                    if (Node->left->left) {
+                        Node->left->left->color = BLACK;
+                    }
+                    Node->left->color = RED;
+                    tmp = Node;
+                    leftBigRotate(Node->left, ERROR_CODE);
+                    Node = tmp;
+                }
+                Node->left->color = Node->parent->color;
+                Node->parent->color = BLACK;
+                if (Node->left) Node->left->color = BLACK;
+                leftBigRotate(Node, ERROR_CODE);
+                return;
+            }
+        }
+    }
 
 
 }
