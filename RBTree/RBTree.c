@@ -97,7 +97,7 @@ RBNode_t * addValue(RBNode_t **root, long long value, int *ERROR_CODE) {
         newNode->left = NULL;
         newNode->parent = NULL;
         printf("End of addValue\n");
-        *root = findRoot(newNode);
+        *root = newNode;
         return newNode;
     }
     RBNode_t *newNode = (RBNode_t*)malloc(sizeof(RBNode_t));
