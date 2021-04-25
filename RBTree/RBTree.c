@@ -25,7 +25,7 @@ static inline int nodeColor(RBNode_t *Node) {
     else return BLACK;
 }
 
-RBNode_t * searchTree(RBNode_t **root, long long value, int *ERROR_CODE) {
+RBNode_t * searchTree(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
     RBNode_t *p;
     if (!root || !*root) {
         *ERROR_CODE = 5;
@@ -56,7 +56,7 @@ RBNode_t * findRoot(RBNode_t *current) {
     return current;
 }
 
-RBNode_t * addValue(RBNode_t **root, long long value, int *ERROR_CODE) {
+RBNode_t * addValue(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
     printf("Input in addValue\n");
     RBNode_t *p, *next;
     char isLeafLeft = 0;
@@ -191,9 +191,10 @@ void blackDeleteBalanceTree(RBNode_t *Node, int *ERROR_CODE) {
 
 }
 
-void deleteNode(RBNode_t **root, long long value, int *ERROR_CODE) {
+void deleteNode(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
     RBNode_t *p = 0, *tmp = 0;
     RBNode_t *el;
+    RBNode_value_t tmpN = 0;
     if (!root || !*root) {
         *ERROR_CODE = 5;
         return;
@@ -245,9 +246,10 @@ void deleteNode(RBNode_t **root, long long value, int *ERROR_CODE) {
         while (p->left) { //Ищем минимальный справа
             p = p->left;
         }
-        tmp = el; //Меняем местами с наименьшим справа
-        el->value = p->value;
-        p->value = tmp->value;
+
+        tmpN = el->value;
+        p->value = el->value;
+        el->value = tmpN;
         deleteNode(root, p->value, ERROR_CODE); //Вызываем удаление вершины для данного элемента
     }
 

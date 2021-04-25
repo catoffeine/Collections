@@ -4,17 +4,18 @@
 struct RBNode_t;
 
 typedef struct RBNode_t RBNode_t;
+typedef long long RBNode_value_t;
 
 struct RBNode_t {
     RBNode_t *right, *left, *parent;
-    long long value;
+    RBNode_value_t value;
     char color; //1 - Red, 0 - black
 };
 
-RBNode_t * addValue(RBNode_t **root, long long value, int *ERROR_CODE);
-RBNode_t * searchTree(RBNode_t **root, long long value, int *ERROR_CODE);
+RBNode_t * addValue(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE);
+RBNode_t * searchTree(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE);
 RBNode_t * findRoot(RBNode_t *current);
-void deleteNode(RBNode_t **root, long long value, int *ERROR_CODE);
+void deleteNode(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE);
 void blackDeleteBalanceTree(RBNode_t *Node, int *ERROR_CODE);
 
 void balanceTree(RBNode_t *el, int *ERROR_CODE);
