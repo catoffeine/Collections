@@ -27,7 +27,7 @@ static inline int nodeColor(RBNode_t *Node) {
 
 RBNode_t * searchTree(RBNode_t **root, long long value, int *ERROR_CODE) {
     RBNode_t *p;
-    if (!root) {
+    if (!root || !*root) {
         *ERROR_CODE = 5;
         return NULL;
     }
@@ -60,7 +60,7 @@ RBNode_t * addValue(RBNode_t **root, long long value, int *ERROR_CODE) {
     printf("Input in addValue\n");
     RBNode_t *p, *next;
     char isLeafLeft = 0;
-    if (root) {
+    if (!root) {
         *ERROR_CODE = 5;
         return NULL;
     }
