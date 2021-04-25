@@ -14,14 +14,21 @@ static inline int nodeColor(RBNode_t *Node) {
 RBNode_t * searchTree(RBNode_t *root, long long value, int *ERROR_CODE) {
     RBNode_t *p = root;
     if (!root) {
+        *ERROR_CODE = 5;
         return NULL;
     }
     do {
         if (p->value < value) {
-            if (!p->right) return NULL;
+            if (!p->right) {
+                *ERROR_CODE = 6;
+                return NULL;
+             }
             p = p->right;
         } else if (value < p->value) {
-            if (!p->left) return NULL;
+            if (!p->left) {
+                *ERROR_CODE = 6;
+                return NULL;
+             }
             p = p->left;
         } else {
             return p;
@@ -89,7 +96,7 @@ RBNode_t * addValue(RBNode_t *root, long long value, int *ERROR_CODE) {
     return newNode;
 }
 
-void blackDeleteBalanceTree(RBNode_t *Node, int isLeft, int *ERROR_CODE) {
+void blackDeleteBalanceTree(RBNode_t *Node, int *ERROR_CODE) {
     RBNode_t *p = Node, *tmp = 0;
 
     if (!Node) {
@@ -158,23 +165,25 @@ void blackDeleteBalanceTree(RBNode_t *Node, int isLeft, int *ERROR_CODE) {
 
 }
 
-void deleteNode(RBNode_t *el, int *ERROR_CODE) {
-    RBNode_t *p = el, *tmp = 0;
-    int isLeft = 0;
-    if (!el) {
+void deleteNode(RBNode_t *root, long long value, int *ERROR_CODE) {
+    RBNode_t *p = 0, *tmp = 0;
+    RBNode_t *el;
+    if (!root) {
         *ERROR_CODE = 5;
         return;
     }
-
+    el = searchTree(root, value, ERROR_CODE);
+    p = el;
+    if (*ERROR_CODE) {
+        return;
+    }
     if (!el->right && !el->left) { //Если отсутствуют потомки
         tmp = el;
         if (el->parent) { //Если есть родитель, делаем указатель на этот элемент - NULL;
             if (el->parent->left == el) {
                 el->parent->left = NULL;
-                isLeft = 1;
             } else {
                 el->parent->right = NULL;
-                isLeft = 0;
             }
         }
 
@@ -182,7 +191,7 @@ void deleteNode(RBNode_t *el, int *ERROR_CODE) {
         el = NULL;
 
         if (!tmp->color) { //Если черный
-            blackDeleteBalanceTree(el->parent, isLeft, ERROR_CODE);
+            blackDeleteBalanceTree(el->parent, ERROR_CODE);
         }
 
         return;
@@ -213,7 +222,7 @@ void deleteNode(RBNode_t *el, int *ERROR_CODE) {
         tmp = el; //Меняем местами с наименьшим справа
         el->value = p->value;
         p->value = tmp->value;
-        deleteNode(p, ERROR_CODE); //Вызываем удаление вершины для данного элемента
+        deleteNode(root, p->value, ERROR_CODE); //Вызываем удаление вершины для данного элемента
     }
 
 }
