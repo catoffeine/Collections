@@ -5,30 +5,45 @@
 #define RED 1
 #define BLACK 0
 
+#define DBG
+
+#ifdef DBG
+
+#define PRINT_IF_DBG(cond,msg) {\
+    if (cond) fprintf(stderr, "%s\n", msg);\
+}
+
+#else
+
+#define PRINT_IF_DBG(cond, msg) {}
+
+#endif
+
 static inline int nodeColor(RBNode_t *Node) {
     if (!Node) return BLACK;
     if (Node->color) return RED;
     else return BLACK;
 }
 
-RBNode_t * searchTree(RBNode_t *root, long long value, int *ERROR_CODE) {
-    RBNode_t *p = root;
+RBNode_t * searchTree(RBNode_t **root, long long value, int *ERROR_CODE) {
+    RBNode_t *p;
     if (!root) {
         *ERROR_CODE = 5;
         return NULL;
     }
+    p = *root;
     do {
         if (p->value < value) {
             if (!p->right) {
                 *ERROR_CODE = 6;
                 return NULL;
-             }
+            }
             p = p->right;
         } else if (value < p->value) {
             if (!p->left) {
                 *ERROR_CODE = 6;
                 return NULL;
-             }
+            }
             p = p->left;
         } else {
             return p;
@@ -36,12 +51,21 @@ RBNode_t * searchTree(RBNode_t *root, long long value, int *ERROR_CODE) {
     } while (1);
 }
 
+RBNode_t * findRoot(RBNode_t *current) {
+    while (current->parent) current = current->parent;
+    return current;
+}
 
-RBNode_t * addValue(RBNode_t *root, long long value, int *ERROR_CODE) {
+RBNode_t * addValue(RBNode_t **root, long long value, int *ERROR_CODE) {
     printf("Input in addValue\n");
-    RBNode_t *p, *next = root;
+    RBNode_t *p, *next;
     char isLeafLeft = 0;
     if (root) {
+        *ERROR_CODE = 5;
+        return NULL;
+    }
+    next = *root;
+    if (*root) {
         do {
             p = next;
             if (value > next->value) {
@@ -73,6 +97,7 @@ RBNode_t * addValue(RBNode_t *root, long long value, int *ERROR_CODE) {
         newNode->left = NULL;
         newNode->parent = NULL;
         printf("End of addValue\n");
+        *root = findRoot(newNode);
         return newNode;
     }
     RBNode_t *newNode = (RBNode_t*)malloc(sizeof(RBNode_t));
@@ -93,6 +118,7 @@ RBNode_t * addValue(RBNode_t *root, long long value, int *ERROR_CODE) {
     balanceTree(newNode, ERROR_CODE);
     if (*ERROR_CODE) return NULL;
     printf("END of addValue\n");
+    *root = findRoot(newNode);
     return newNode;
 }
 
@@ -165,10 +191,10 @@ void blackDeleteBalanceTree(RBNode_t *Node, int *ERROR_CODE) {
 
 }
 
-void deleteNode(RBNode_t *root, long long value, int *ERROR_CODE) {
+void deleteNode(RBNode_t **root, long long value, int *ERROR_CODE) {
     RBNode_t *p = 0, *tmp = 0;
     RBNode_t *el;
-    if (!root) {
+    if (!root || !*root) {
         *ERROR_CODE = 5;
         return;
     }
@@ -177,8 +203,8 @@ void deleteNode(RBNode_t *root, long long value, int *ERROR_CODE) {
     if (*ERROR_CODE) {
         return;
     }
+
     if (!el->right && !el->left) { //Если отсутствуют потомки
-        tmp = el;
         if (el->parent) { //Если есть родитель, делаем указатель на этот элемент - NULL;
             if (el->parent->left == el) {
                 el->parent->left = NULL;
@@ -186,31 +212,31 @@ void deleteNode(RBNode_t *root, long long value, int *ERROR_CODE) {
                 el->parent->right = NULL;
             }
         }
-
-        free(el);
-        el = NULL;
-
-        if (!tmp->color) { //Если черный
+        if (!nodeColor(el)) { //Если черный
             blackDeleteBalanceTree(el->parent, ERROR_CODE);
         }
+        *root = findRoot(el);
+        free(el);
+        el = NULL;
 
         return;
     }
 
     if ((!el->right && el->left) || (el->right && !el->left)) { //Если у вершины только один ребенок
         if (!el->color) { //Если элемент черный
-            if (el->right) {
-                el->value = el->right->value;
+            if (el->right) { //Если ребенок справа
+                el->value = el->right->value; //Присваеваем значение ребенка и удаляем ребенка
                 free(el->right);
                 el->right = NULL;
-            } else {
-                el->value = el->left->value;
+            } else {  //Если ребенок слева
+                el->value = el->left->value; //Присваеваем значение ребенка и удаляем ребенка
                 free(el->left);
                 el->left = NULL;
             }
         } else {
             *ERROR_CODE = 6; //У красного не может быть никакого одного ребенка
         }
+        *root = findRoot(el);
         return;
     }
 

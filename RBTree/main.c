@@ -9,11 +9,11 @@ int main () {
     if (ERROR_CODE) fprintf(stderr, "ERROR: code %d\n", ERROR_CODE);
     else printf("OK\n");
 
-    addValue(root, 20, &ERROR_CODE);
-    addValue(root, 10, &ERROR_CODE);
-    addValue(root, 30, &ERROR_CODE);
+    addValue(&root, 20, &ERROR_CODE);
+    addValue(&root, 10, &ERROR_CODE);
+    addValue(&root, 30, &ERROR_CODE);
     ERROR_CODE = 0;
-    deleteNode(root, 20, &ERROR_CODE);
+    deleteNode(&root, 20, &ERROR_CODE);
     if (ERROR_CODE) {
         printf("ERROR: %d\n", ERROR_CODE);
         return 0;
