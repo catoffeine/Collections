@@ -13,6 +13,9 @@ struct RBNode_t {
 
 RBNode_t * addValue(RBNode_t *root, long long value, int *ERROR_CODE);
 RBNode_t * searchTree(RBNode_t *root, long long value, int *ERROR_CODE);
+void deleteNode(RBNode_t *root, long long value, int *ERROR_CODE);
+void blackDeleteBalanceTree(RBNode_t *Node, int *ERROR_CODE);
+
 void balanceTree(RBNode_t *el, int *ERROR_CODE);
 void leftSmallRotate(RBNode_t *Node, int *ERROR_CODE);
 void rightSmallRotate(RBNode_t *Node, int *ERROR_CODE);
