@@ -9,7 +9,7 @@
 
 #ifdef DBG
 
-#define PRINT_IF_DBG(cond,msg) {\
+#define PRINT_IF_DBG(cond, msg) {\
     if (cond) fprintf(stderr, "%s\n", msg);\
 }
 
@@ -24,6 +24,8 @@ static inline int nodeColor(RBNode_t *Node) {
     if (Node->color) return RED;
     else return BLACK;
 }
+
+//Функция проверки условий соблюдения свойств красно-черного дерева, написать тесты и добавить DBG везде
 
 RBNode_t * searchTree(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
     RBNode_t *p;
@@ -250,9 +252,11 @@ void deleteNode(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
         tmpN = el->value;
         p->value = el->value;
         el->value = tmpN;
-        deleteNode(root, p->value, ERROR_CODE); //Вызываем удаление вершины для данного элемента
-    }
 
+        if (!nodeColor(p)) {
+            blackDeleteBalanceTree(p, ERROR_CODE); //Вызываем балансировку от p
+        }
+    }
 }
 
 
