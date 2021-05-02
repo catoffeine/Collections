@@ -9,9 +9,9 @@
 
 #ifdef DBG
 
-#define PRINT_IF_DBG(cond, msg) {\
-    if (cond) fprintf(stderr, "%s\n", msg);\
-}
+#define PRINT_IF_DBG(cond, msg) {if (cond) fprintf(stderr, "%s: % 3d: %s\n", __FILE__, __LINE__, msg);}
+
+#define PRINT_EC { fprintf(stderr, "%s: % 3d: *ERROR_CODE: %d\n", __FILE__, __LINE__, *ERROR_CODE); }
 
 #else
 
@@ -30,7 +30,6 @@ static inline int nodeColor(RBNode_t *Node) {
 RBNode_t * searchTree(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
     RBNode_t *p;
     if (!root || !*root) {
-        *ERROR_CODE = 5;
         return NULL;
     }
     p = *root;
@@ -38,12 +37,14 @@ RBNode_t * searchTree(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
         if (p->value < value) {
             if (!p->right) {
                 *ERROR_CODE = 6;
+                PRINT_EC
                 return NULL;
             }
             p = p->right;
         } else if (value < p->value) {
             if (!p->left) {
                 *ERROR_CODE = 6;
+                PRINT_EC
                 return NULL;
             }
             p = p->left;
@@ -59,11 +60,11 @@ RBNode_t * findRoot(RBNode_t *current) {
 }
 
 RBNode_t * addValue(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
-    printf("Input in addValue\n");
+    PRINT_IF_DBG(1, "BEGIN function addValue");
     RBNode_t *p, *next;
     char isLeafLeft = 0;
     if (!root) {
-        *ERROR_CODE = 5;
+        *ERROR_CODE = 3;
         return NULL;
     }
     next = *root;
@@ -93,13 +94,13 @@ RBNode_t * addValue(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
             *ERROR_CODE = 2;
             return NULL;
         }
-        newNode->color = 0;
+        newNode->color = BLACK;
         newNode->value = value;
         newNode->right = NULL;
         newNode->left = NULL;
         newNode->parent = NULL;
-        printf("End of addValue\n");
         *root = newNode;
+        PRINT_IF_DBG(1, "END of function addValue");
         return newNode;
     }
     RBNode_t *newNode = (RBNode_t*)malloc(sizeof(RBNode_t));
@@ -109,7 +110,7 @@ RBNode_t * addValue(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
     }
 
     newNode->parent = p;
-    newNode->color = 1;
+    newNode->color = RED;
     newNode->right = NULL;
     newNode->left = NULL;
     newNode->value = value;
@@ -119,86 +120,91 @@ RBNode_t * addValue(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
 
     balanceTree(newNode, ERROR_CODE);
     if (*ERROR_CODE) return NULL;
-    printf("END of addValue\n");
     *root = findRoot(newNode);
+    PRINT_IF_DBG(1, "END of function addValue");
     return newNode;
 }
 
 void blackDeleteBalanceTree(RBNode_t *Node, int *ERROR_CODE) {
-    RBNode_t *p = Node, *tmp = 0;
-
+    PRINT_IF_DBG(1, "BEGIN function blackDeleteBalanceTree");
+    RBNode_t *pNode = Node, *tmp = 0;
+    RBNode_t *root;
     if (!Node) {
-        *ERROR_CODE = 5;
+        *ERROR_CODE = 3;
         return;
     }
+    root = findRoot(Node);
 
     while (Node->parent && !Node->color) {
-        if (Node == Node->parent->left) {
-            if (Node->right->color) { //Если правый потомок - красный
-                Node->right->color = BLACK;
-                Node->color = RED;
-                leftBigRotate(Node, ERROR_CODE);
-                Node = Node->parent;
+        pNode = Node->parent;
+        if (Node == Node->parent->left) { //Если элемент находится слева
+            if (nodeColor(pNode->right)) { //Если правый потомок - красный
+                // pNode->right->color = BLACK; //Меняем цвета дяди и родителя на черный и красный соответственно
+                // pNode->color = RED;
+                leftBigRotate(pNode, ERROR_CODE);
+                pNode = Node->parent; //Переходим на уровень выше из-за вращения
             }
 
-            if (!nodeColor(Node->right->right) && !nodeColor(Node->right->left)) { //Если потомки - черные
-                Node->right->color = BLACK; //RED maybe
+            if (!nodeColor(pNode->right->right) && !nodeColor(pNode->right->left)) { //Если потомки правого сына - черные
+                pNode->right->color = RED;
                 Node = Node->parent;
             } else {
-                if (nodeColor(Node->right->left) && !nodeColor(Node->right->right)) {
-                    if (Node->right->left) Node->right->left->color = BLACK;
-                    Node->right->color = RED;
-                    tmp = Node;
-                    rightBigRotate(Node->right, ERROR_CODE);
+                if (!nodeColor(pNode->right->right)) { //Если левый красный и правый черный - потомки правого сына
+                    if (pNode->right->left) pNode->right->left->color = BLACK;
+                    pNode->right->color = RED;
+                    rightBigRotate(pNode->right, ERROR_CODE);
                     if (*ERROR_CODE) return;
-                    Node = tmp;
+                    pNode = Node->parent; //на уровень выше из-за врашения
                 }
-                Node->right->color = Node->parent->color;
+                pNode->right->color = pNode->parent->color;
                 Node->parent->color = BLACK;
-                if (Node->right->right) Node->right->right->color = BLACK;
-                leftBigRotate(Node, ERROR_CODE);
+                if (pNode->right->right) pNode->right->right->color = BLACK;
+                leftBigRotate(Node->parent, ERROR_CODE);
+                root->color = BLACK;
+                PRINT_IF_DBG(1, "END function blackDeleteBalanceTree");
                 return;
             }
 
         } else {
-            if (Node->left->color) { //Если левый потомок - красный
-                Node->left->color = BLACK;
-                Node->color = RED;
-                rightBigRotate(Node, ERROR_CODE);
-                Node = Node->parent;
+            if (nodeColor(pNode->left)) { //Если левый потомок - красный
+                // pNode->left->color = BLACK;
+                // pNode->color = RED;
+                rightBigRotate(pNode, ERROR_CODE);
+                pNode = Node->parent;
             }
 
-            if (!nodeColor(Node->left->right) && !nodeColor(Node->left->left)) { //Если потомки - черные
-                Node->left->color = BLACK; //RED maybe
+            if (!nodeColor(pNode->left->right) && !nodeColor(pNode->left->left)) { //Если потомки - черные
+                pNode->left->color = BLACK; //RED maybe
                 Node = Node->parent;
             } else {
-                if (nodeColor(Node->left->left) && !nodeColor(Node->left->right)) {
-                    if (Node->left->left) {
-                        Node->left->left->color = BLACK;
-                    }
+                if (!nodeColor(pNode->left->left)) {
+                    if (pNode->left->right) pNode->left->right->color = BLACK;
                     Node->left->color = RED;
-                    tmp = Node;
                     leftBigRotate(Node->left, ERROR_CODE);
-                    Node = tmp;
+                    pNode = Node->parent; //на уровень выше из-за врашения
                 }
-                Node->left->color = Node->parent->color;
+                pNode->left->color = pNode->parent->color;
                 Node->parent->color = BLACK;
-                if (Node->left) Node->left->color = BLACK;
-                leftBigRotate(Node, ERROR_CODE);
+                if (pNode->left) pNode->left->color = BLACK;
+                leftBigRotate(Node->parent, ERROR_CODE);
+                root->color = BLACK;
+                PRINT_IF_DBG(1, "END function blackDeleteBalanceTree");
                 return;
             }
         }
     }
+    PRINT_IF_DBG(1, "END function blackDeleteBalanceTree");
 
 
 }
 
 void deleteNode(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
+    PRINT_IF_DBG(1, "BEGIN function deleteNode");
     RBNode_t *p = 0, *tmp = 0;
     RBNode_t *el;
     RBNode_value_t tmpN = 0;
     if (!root || !*root) {
-        *ERROR_CODE = 5;
+        *ERROR_CODE = 3;
         return;
     }
     el = searchTree(root, value, ERROR_CODE);
@@ -216,30 +222,34 @@ void deleteNode(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
             }
         }
         if (!nodeColor(el)) { //Если черный
-            blackDeleteBalanceTree(el->parent, ERROR_CODE);
+            blackDeleteBalanceTree(el, ERROR_CODE);
         }
         *root = findRoot(el);
         free(el);
         el = NULL;
-
+        PRINT_IF_DBG(1, "END function deleteNode");
         return;
     }
 
     if ((!el->right && el->left) || (el->right && !el->left)) { //Если у вершины только один ребенок
         if (!el->color) { //Если элемент черный
             if (el->right) { //Если ребенок справа
+                PRINT_IF_DBG(nodeColor(el->right), "BLACK RIGHT SINGLE CHILD, IMPOSSIBLE")
                 el->value = el->right->value; //Присваеваем значение ребенка и удаляем ребенка
                 free(el->right);
                 el->right = NULL;
             } else {  //Если ребенок слева
+                PRINT_IF_DBG(nodeColor(el->right), "BLACK LEFT SINGLE CHILD, IMPOSSIBLE")
                 el->value = el->left->value; //Присваеваем значение ребенка и удаляем ребенка
                 free(el->left);
                 el->left = NULL;
             }
         } else {
-            *ERROR_CODE = 6; //У красного не может быть никакого одного ребенка
+            *ERROR_CODE = 7; //У красного не может быть никакого одного ребенка
+            PRINT_EC
         }
         *root = findRoot(el);
+        PRINT_IF_DBG(1, "END function deleteNode");
         return;
     }
 
@@ -249,19 +259,38 @@ void deleteNode(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
             p = p->left;
         }
 
-        tmpN = el->value;
+        tmpN = p->value;
         p->value = el->value;
         el->value = tmpN;
 
-        if (!nodeColor(p)) {
-            blackDeleteBalanceTree(p, ERROR_CODE); //Вызываем балансировку от p
+        if (!nodeColor(p)) { //Если удаляемый элемент - черный
+            if (p->right) { //Если есть правый ребенок
+                PRINT_IF_DBG(nodeColor(el->right), "BLACK RIGHT SINGLE CHILD, IMPOSSIBLE")
+                p->value = p->right->value; //Присваеваем значение ребенка и удаляем ребенка
+                free(p->right);
+                p->right = NULL;
+            } else {
+                blackDeleteBalanceTree(p, ERROR_CODE); //Вызываем балансировку от p
+            }
+            *root = findRoot(p);
+            PRINT_IF_DBG(1, "END function deleteNode");
+            return;
+        } else { // Если красный - удаляем и меняем указатель на NULL;
+            if (!p->parent) {
+                *root = NULL;
+            } else {
+                p->parent->left = NULL;
+            }
+            free(p);
+            p = NULL;
         }
     }
+    PRINT_IF_DBG(1, "END function deleteNode");
 }
 
 
 void balanceTree(RBNode_t *el, int *ERROR_CODE) { //Предпологаем, что el->color==1 - красный
-    printf("INPUT in balanceTree\n");
+    PRINT_IF_DBG(1, "BEGIN function balanceTree");
     RBNode_t *p = el;
     char isLeftEl = 0;
 
@@ -271,7 +300,7 @@ void balanceTree(RBNode_t *el, int *ERROR_CODE) { //Предпологаем, ч
     }
 
     if (!el->parent)  {
-        el->color = 0;
+        el->color = BLACK;
         return;
     }
 
@@ -279,52 +308,53 @@ void balanceTree(RBNode_t *el, int *ERROR_CODE) { //Предпологаем, ч
 
     if (el->parent->color) { //Если красный
         if (isLeftEl) { //Если проверяемый элемент находится слева от родителя
+            PRINT_IF_DBG(!el->parent->parent, "BALANCE TREE: THERE IS NO GRANDPARENT");
             if (el->parent->parent->right == el->parent) { //Если дедушка проверяемого элемента находится по другую сторону
                 rightSmallRotate(el->parent, ERROR_CODE); //Вызываем правое малое вращение от родителя
                 if (*ERROR_CODE) return;
-                balanceTree(el->left, ERROR_CODE);
+                balanceTree(el->right, ERROR_CODE);
                 if (*ERROR_CODE) return;
 
             } else { //Если дедушка проверяемого элемента находится на одной стороне
-                if (el->parent->parent->left->color && !el->parent->parent->left) { //Если дядя проверяемого элемента красный
-                    el->parent->parent->left->color = 0; //Меняем цвета на черный для дяди и для родителя
-                    el->parent->color = 0;
+                if (nodeColor(el->parent->parent->right)) { //Если дядя проверяемого элемента красный
+                    el->parent->parent->right->color = BLACK; //Меняем цвета на черный для дяди и для родителя
+                    el->parent->color = BLACK;
+                    el->parent->parent->color = RED; //Меняем цвет деда на красный
                     balanceTree(el->parent->parent, ERROR_CODE);
                     if (*ERROR_CODE) return;
                 } else { //Дядя черный (или NULL)
                     rightBigRotate(el->parent->parent, ERROR_CODE); //Вызываем большое вращение от дедушки проверяемого элемента
-                    if (*ERROR_CODE) return;
                 }
             }
         } else { //Если проверяемый элемент находится справа от родителя
+            PRINT_IF_DBG(!el->parent->parent, "BALANCE TREE: THERE IS NO GRANDPARENT");
             if (el->parent->parent->left == el->parent) { //Если дедушка проверяемого элемента находится по другую сторону
                 leftSmallRotate(el->parent, ERROR_CODE); //Вызываем левое малое вращение для родителя
                 if (*ERROR_CODE) return;
                 balanceTree(el->left, ERROR_CODE);
                 if (*ERROR_CODE) return;
             } else {
-                if (el->parent->parent->right->color && !el->parent->parent->right) { //Если дядя проверяемого элемента тоже красный
-                    el->parent->parent->right->color = 0;
-                    el->parent->color = 0;
+                if (nodeColor(el->parent->parent->left)) { //Если дядя проверяемого элемента тоже красный
+                    el->parent->parent->left->color = BLACK;
+                    el->parent->color = BLACK;
+                    el->parent->parent->color = RED;
                     balanceTree(el->parent->parent, ERROR_CODE);
                     if (*ERROR_CODE) return;
                 } else { //Дядя черный
                     leftBigRotate(el->parent->parent, ERROR_CODE); //Вызываем большое вращение от дедушки проверяемого элемента
-                    if (*ERROR_CODE) return;
                 }
             }
         }
     } else {
-        printf("END balanceTree\n");
+        PRINT_IF_DBG(1, "END of function balanceTree");
         return;
     }
-
 }
 
 void leftSmallRotate(RBNode_t *Node, int *ERROR_CODE) {
-    printf("INPUT in leftSmallRotate\n");
+    PRINT_IF_DBG(1, "BEGIN of function leftSmallRotate");
     if (!Node) {
-        *ERROR_CODE = 4;
+        *ERROR_CODE = 3;
         return;
     }
 
@@ -333,13 +363,13 @@ void leftSmallRotate(RBNode_t *Node, int *ERROR_CODE) {
     Node->parent->left->left = Node; //Выставляем уже для потомка отца указатель на левого сына (проверяемый элемент)
     Node->parent->left->parent = Node->parent; //Указываем новых родителей
     Node->parent = Node->parent->left; //Указываем новых родителей
-    printf("END of leftSmallRotate\n");
+    PRINT_IF_DBG(1, "END of function leftSmallRotate");
 }
 
 void rightSmallRotate(RBNode_t *Node, int *ERROR_CODE) {
-    printf("INPUT in rightSmallRotate\n");
+    PRINT_IF_DBG(1, "BEGIN of function rightSmallRotate");
     if (!Node) {
-        *ERROR_CODE = 4;
+        *ERROR_CODE = 3;
         return;
     }
 
@@ -348,20 +378,21 @@ void rightSmallRotate(RBNode_t *Node, int *ERROR_CODE) {
     Node->parent->right->right = Node; //Выставляем уже для потомка отца указатель на правую ноду - проверяемый элемент
     Node->parent->right->parent = Node->parent; //Указываем новых родителей
     Node->parent = Node->parent->right;  //Указываем новых родителей
-    printf("End of rightSmallRotate\n");
+    PRINT_IF_DBG(1, "END of function rightSmallRotate");
 }
 
 void leftBigRotate(RBNode_t *Node, int *ERROR_CODE) {
-    printf("INPUT in leftBigRotate\n");
+    PRINT_IF_DBG(1, "BEGIN of function leftBigRotate");
     RBNode_t *p = Node, *parent = 0, *tmp = 0;
 
     if (!Node) {
-        *ERROR_CODE = 4;
+        *ERROR_CODE = 3;
         return;
     }
 
     if (!p->right) {
         *ERROR_CODE = 5; //Нет правого потомка
+        PRINT_EC
         return;
     }
 
@@ -384,24 +415,23 @@ void leftBigRotate(RBNode_t *Node, int *ERROR_CODE) {
     p->right = tmp; //Для данной ноды в качестве правого потомка указываем ранее запомненного левого потомка правой ноды
     p = p->parent; //Перемещаем указатель на родителя элемента
 
-    p->color = 0; //Черный (Меняем цвета перемещаемых элементов)
-    p->left->color = 1; //Красный
-    balanceTree(p, ERROR_CODE); //Запускаем балансировку для последнего элемента
-    printf("END of leftBigRotate\n");
+    p->color = BLACK; //Черный (Меняем цвета перемещаемых элементов)
+    p->left->color = RED; //Красный
+    PRINT_IF_DBG(1, "END of function leftBigRotate");
 }
 
 void rightBigRotate(RBNode_t *Node, int *ERROR_CODE) {
-    printf("INPUT in rightBigRotate\n");
+    PRINT_IF_DBG(1, "BEGIN of function rightBigRotate");
     RBNode_t *p = Node, *parent = 0, *tmp = 0;
 
     if (!Node) {
-        *ERROR_CODE = 4;
+        *ERROR_CODE = 3;
         return;
     }
 
     if (!p->left) {
         *ERROR_CODE = 5; //Нет левого потомка
-
+        PRINT_EC
         return;
     }
 
@@ -424,8 +454,7 @@ void rightBigRotate(RBNode_t *Node, int *ERROR_CODE) {
     p->left = tmp; //Для данной ноды в качестве левого потомка указываем ранее запомненного правого потомка правой ноды
     p = p->parent; //Перемещаем указатель на родителя элемента
 
-    p->color = 0; //Черный (Меняем цвета перемещаемых элементов)рлдр рлрддрд
-    p->right->color = 1; //Красный
-    balanceTree(p, ERROR_CODE); //Запускаем балансировку для последнего элемента
-    printf("END of rightBigRotate\n");
+    p->color = BLACK; //Черный (Меняем цвета перемещаемых элементов)
+    p->right->color = RED; //Красный
+    PRINT_IF_DBG(1, "END of function rightBigRotate");
 }
