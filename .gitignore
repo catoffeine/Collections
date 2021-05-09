@@ -5,4 +5,5 @@ RBTree/qt/view
 RBTree/qt/Makefile
 RBTree/qt/*_qml.cpp
 RBTree/qt/moc_*
+RBTree/qt/build
 *.out
