@@ -5,7 +5,7 @@
 #define RED 1
 #define BLACK 0
 
-#define DBG
+// #define DBG
 
 #ifdef DBG
 
@@ -16,6 +16,7 @@
 #else
 
 #define PRINT_IF_DBG(cond, msg) {}
+#define PRINT_EC
 
 #endif
 
