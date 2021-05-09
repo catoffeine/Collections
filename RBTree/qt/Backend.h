@@ -4,27 +4,35 @@
 #include <QWidget>
 #include <QPainter>
 #include <QString>
+#include <QTextEdit>
 #include "../RBTree.h"
 
 class Backend: public QWidget {
     Q_OBJECT
     double factor;
+
+    RBNode_t *rbroot;
+    int ERROR_CODE;
+
+    QTextEdit *qte;
 public:
     Backend(QWidget *parent = nullptr);
-    ~Backend() = default;
+    ~Backend();
 
     void paintEvent(QPaintEvent *ev) override;
 
 public slots:
     void ButtonOnClick(QString str);
     void doubleFactor();
+    void slotAddValue();
 };
 
 struct TreeWidth {
-    RBNode_t *Node;
-    long long minX;
-    long long radius;
-    long long *tree;
+    long long w;
+//    RBNode_t *Node;
+//    long long minX;
+//    long long radius;
+//    long long *tree;
 };
 
 struct Stack {
@@ -34,6 +42,5 @@ struct Stack {
     long long size;
 };
 
-void pushFront(Stack **Node, RBNode_t *value); 
+void pushFront(Stack **Node, RBNode_t *value);
 RBNode_t* popFront(Stack **Node);
-

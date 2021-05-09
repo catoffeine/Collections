@@ -1,5 +1,5 @@
 TEMPLATE = app
 QT += qml quick widgets
-HEADERS = Backend.h
-SOURCES = main.cpp Backend.cpp
+HEADERS = RBTree.h Backend.h
+SOURCES = main.cpp RBTree.c Backend.cpp
 RESOURCES = qml.qrc
