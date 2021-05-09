@@ -1,6 +1,11 @@
 #ifndef RBTREE_H
 #define RBTREE_H
 
+#ifdef __cplusplus
+extern "C" {
+
+#endif
+
 struct RBNode_t;
 
 typedef struct RBNode_t RBNode_t;
@@ -23,5 +28,10 @@ void leftSmallRotate(RBNode_t *Node, int *ERROR_CODE);
 void rightSmallRotate(RBNode_t *Node, int *ERROR_CODE);
 void leftBigRotate(RBNode_t *Node, int *ERROR_CODE);
 void rightBigRotate(RBNode_t *Node, int *ERROR_CODE);
+
+#ifdef __cplusplus
+}
+
+#endif
 
 #endif
