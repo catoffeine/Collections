@@ -2,4 +2,7 @@ RBTree/RBTreeProg
 *.o
 *.stash
 RBTree/qt/view
+RBTree/qt/Makefile
+RBTree/qt/*_qml.cpp
+RBTree/qt/moc_*
 *.out
