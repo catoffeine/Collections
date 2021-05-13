@@ -10,7 +10,19 @@
 
 void calcWidthX(const RBNode_t *Node, void* state) {
     TreeWidth *st = (TreeWidth*)state;
-    if (!state) return;
+    if (!st) return;
+    
+}
+
+void buildTree(RBNode_t *Node, long long index, void *state) {
+    TreeWidth *treeW = static_cast<TreeWidth*>(state);
+    if (!treeW) {
+        treeW = new TreeWidth;
+    }
+    if (treeW->tree) treeW->tree = new long long;
+    if (treeW->treeSize <= index) treeW->tree = (long long*)realloc(treeW->tree, ++(treeW->treeSize)*sizeof(TreeWidth));
+    (treeW->tree)[index] = Node->value;
+    qDebug() << QStringLiteral("treeW->tree[index]: ") << (treeW->tree)[index] << "\n"; 
 }
 
 void runOverTheTree(RBNode_t *root, void(*func)(const RBNode_t *Node, void* state), void* state) {
@@ -39,12 +51,13 @@ void pushFront(Stack **Node, RBNode_t *value) {
     }
 }
 
-void runWidthTheTree(RBNode_t *root, long long(*func)(const RBNode_t *Node)) {
+void runWidthTheTree(RBNode_t *root, void(*func)(const RBNode_t *Node, long long index, void *state), void *state) {
+    long long index = 0;
     Stack *Node;
     pushFront(&Node, root);
     while (Node->size) {
         RBNode_t *rbNode = popFront(&Node);
-        func(rbNode);
+        func(rbNode, index++, state);
         if (rbNode->left) pushFront(&Node, rbNode->left);
         if (rbNode->right) pushFront(&Node, rbNode->right);
     }
@@ -62,8 +75,12 @@ RBNode_t* popFront(Stack **Node) {
     return delValue;
 }
 
+
 Backend::Backend(QWidget *parent): QWidget(parent), factor{1}, rbroot{nullptr} {
 //    addValue(&rbroot, );
+               
+    trW = new TreeWidth;
+
     QWidget *wgt = new QWidget(this);
     wgt->resize(200, 200);
 
@@ -99,6 +116,7 @@ Backend::~Backend() {
     free(rbroot);
 }
 
+
 void Backend::paintEvent(QPaintEvent *ev) {
     Q_UNUSED(ev);
 
@@ -122,10 +140,11 @@ void Backend::paintEvent(QPaintEvent *ev) {
         double x = (width() - r)/2;
         double y = (height() - r)/2;
 
-        painter.setPen(QPen(Qt::black, 2, Qt::SolidLine, Qt::FlatCap));
-        painter.setBrush(QBrush(Qt::yellow, Qt::SolidPattern));
+        painter.setPen(QPen(Qt::white, 2, Qt::SolidLine, Qt::FlatCap));
+        if (nodeColor(rbroot)) painter.setBrush(QBrush(Qt::red, Qt::SolidPattern)); 
+        else painter.setBrush(QBrush(Qt::black, Qt::SolidPattern));
         painter.drawEllipse(x, y, r, r);
-        painter.drawText(x, y, QString::number(rbroot->value));
+        painter.drawText(x+r/2, y+r/2, QString::number(rbroot->value));
     }
 }
 
@@ -140,6 +159,12 @@ void Backend::ButtonOnClick(QString str) {
 }
 
 void Backend::slotAddValue() {
-  addValue(&rbroot, qte->toPlainText().trimmed().toLongLong(), &ERROR_CODE);
-  repaint();
+    additingValue = qte->toPlainText().trimmed().toLongLong();
+    addValue(&rbroot, additingValue, &ERROR_CODE);
+    runWidthTheTree(rbroot, buildTree, trW);
+    //runOverTheTree(rbroot, something, trW);
+    repaint();
 }
+
+
+
