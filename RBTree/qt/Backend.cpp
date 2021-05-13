@@ -14,12 +14,12 @@ void calcWidthX(const RBNode_t *Node, void* state) {
     
 }
 
-void buildTree(RBNode_t *Node, long long index, void *state) {
+void buildTree(const RBNode_t *Node, long long index, void *state) {
     TreeWidth *treeW = static_cast<TreeWidth*>(state);
     if (!treeW) {
         treeW = new TreeWidth;
     }
-    if (treeW->tree) treeW->tree = new long long;
+    if (!treeW->tree) treeW->tree = new long long;
     if (treeW->treeSize <= index) treeW->tree = (long long*)realloc(treeW->tree, ++(treeW->treeSize)*sizeof(TreeWidth));
     (treeW->tree)[index] = Node->value;
     qDebug() << QStringLiteral("treeW->tree[index]: ") << (treeW->tree)[index] << "\n"; 
@@ -34,47 +34,53 @@ void runOverTheTree(RBNode_t *root, void(*func)(const RBNode_t *Node, void* stat
     func(root, state);
 }
 
-void pushFront(Stack **Node, RBNode_t *value) {
+void pushFront(StackNode **Node, RBNode_t *value) {
     if (!Node) {
-        Node = new Stack*;
+        throw std::runtime_error("Node is invalid\n");
+    }
+    if (!*Node) {
+        *Node = new StackNode;
         (*Node)->right = nullptr;
         (*Node)->left = nullptr;
         (*Node)->value = value;
-        (*Node)->size++;
+        (*Node)->size = 0;
     } else {
-        Stack *newNode = new Stack;
+        StackNode *newNode = new StackNode;
         newNode->right = *Node;
         newNode->left = nullptr;
         newNode->value = value;
-        newNode->size = (*Node)->size++;
-        (*Node)->left = newNode; *Node = newNode;
+        newNode->size = (*Node)->size + 1;
+        (*Node)->left = newNode; 
+        *Node = newNode;
     }
+}
+
+RBNode_t* popFront(StackNode **Node) {
+    if (!Node || !*Node) return nullptr;
+    StackNode *nodeToDelete = *Node;
+    RBNode_t *delValue = nodeToDelete->value;
+    *Node = (*Node)->right;
+    if (*Node) (*Node)->left = nullptr;
+    delete nodeToDelete;
+    return delValue;
 }
 
 void runWidthTheTree(RBNode_t *root, void(*func)(const RBNode_t *Node, long long index, void *state), void *state) {
     long long index = 0;
-    Stack *Node;
-    pushFront(&Node, root);
-    while (Node->size) {
-        RBNode_t *rbNode = popFront(&Node);
-        func(rbNode, index++, state);
-        if (rbNode->left) pushFront(&Node, rbNode->left);
-        if (rbNode->right) pushFront(&Node, rbNode->right);
+    StackNode *Node{nullptr};
+    try {
+        pushFront(&Node, root);
+        while (Node->size) {
+            RBNode_t *rbNode = popFront(&Node);
+            func(rbNode, index++, state);
+            if (rbNode->left) pushFront(&Node, rbNode->left);
+            if (rbNode->right) pushFront(&Node, rbNode->right);
+        }
+        popFront(&Node);
+    } catch(const std::exception &ex) {
+       qDebug() << ex.what(); 
     }
 }
-
-
-RBNode_t* popFront(Stack **Node) {
-    if (!Node) return nullptr;
-    Stack *deletingNode = *Node;
-    RBNode_t *delValue = deletingNode->value;
-    if ((*Node)->right) (*Node)->right->size = (*Node)->size--;
-    *Node = (*Node)->right;
-    (*Node)->left = nullptr;
-    delete deletingNode;
-    return delValue;
-}
-
 
 Backend::Backend(QWidget *parent): QWidget(parent), factor{1}, rbroot{nullptr} {
 //    addValue(&rbroot, );

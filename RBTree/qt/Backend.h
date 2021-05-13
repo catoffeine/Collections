@@ -10,7 +10,7 @@
 struct TreeWidth;
 void buildTree(const RBNode_t *Node, long long index, void *state);
 
-class Backend: public QWidget {
+class Backend : public QWidget {
     Q_OBJECT
     double factor;
 
@@ -44,12 +44,12 @@ struct TreeWidth {
 //    long long *tree;
 };
 
-struct Stack {
-    Stack *left;
-    Stack *right;
+struct StackNode {
+    StackNode *left;
+    StackNode *right;
     RBNode_t *value;
     long long size;
 };
 
-void pushFront(Stack **Node, RBNode_t *value);
-RBNode_t* popFront(Stack **Node);
+void pushFront(StackNode **Node, RBNode_t *value);
+RBNode_t* popFront(StackNode **Node);
