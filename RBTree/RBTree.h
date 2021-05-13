@@ -22,6 +22,9 @@ RBNode_t * searchTree(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE);
 RBNode_t * findRoot(RBNode_t *current);
 void deleteNode(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE);
 void blackDeleteBalanceTree(RBNode_t *Node, int *ERROR_CODE);
+int nodeColor(RBNode_t *Node);
+
+void deleteTree(RBNode_t *Node);
 
 void balanceTree(RBNode_t *el, int *ERROR_CODE);
 void leftSmallRotate(RBNode_t *Node, int *ERROR_CODE);

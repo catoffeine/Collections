@@ -10,7 +10,6 @@
 #ifdef DBG
 
 #define PRINT_IF_DBG(cond, msg) {if (cond) fprintf(stderr, "%s: % 3d: %s\n", __FILE__, __LINE__, msg);}
-
 #define PRINT_EC { fprintf(stderr, "%s: % 3d: *ERROR_CODE: %d\n", __FILE__, __LINE__, *ERROR_CODE); }
 
 #else
@@ -20,10 +19,18 @@
 
 #endif
 
-static inline int nodeColor(RBNode_t *Node) {
+int nodeColor(RBNode_t *Node) {
     if (!Node) return BLACK;
     if (Node->color) return RED;
     else return BLACK;
+}
+
+
+void deleteTree(RBNode_t *Node) {
+    if (!Node) return;
+    deleteTree(Node->left);
+    deleteTree(Node->right);
+    free(Node);
 }
 
 //Функция проверки условий соблюдения свойств красно-черного дерева, написать тесты и добавить DBG везде
