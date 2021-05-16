@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 #include <QObject>
 #include <QWidget>
 #include <QPainter>
@@ -9,6 +11,9 @@
 
 struct TreeWidth;
 void buildTree(const RBNode_t *Node, long long index, void *state);
+size_t calcHeightY(const RBNode_t *nodeToAdd);
+struct StackNode;
+struct StateForWidthCalc;
 
 class Backend : public QWidget {
     Q_OBJECT
@@ -18,6 +23,7 @@ class Backend : public QWidget {
     int ERROR_CODE;
     long long additingValue;
     TreeWidth *trW;
+    StateForWidthCalc *stateFWCalc;
 
     QTextEdit *qte;
 public:
@@ -31,24 +37,28 @@ public slots:
     void slotAddValue();
 };
 
+void SN_push(StackNode **Node, const RBNode_t *value);
+const StackNode* SN_find(const StackNode *top, const RBNode_t *node);
 
 struct TreeWidth {
+    StackNode *stack;
     long long w;
     long long value;
     long long *tree;
-    long long treeSize;
-//    long long lastChangedInd;
-//    RBNode_t *Node;
-//    long long minX;
-//    long long radius;
-//    long long *tree;
+    long long size;
+};
+
+struct StateForWidthCalc {
+    StackNode *top;
+    size_t size;
+    size_t minWidth;
+    QPainter *painter;
 };
 
 struct StackNode {
-    StackNode *left;
-    StackNode *right;
-    RBNode_t *value;
-    long long size;
+    const RBNode_t *nodePtr;
+    StackNode *previous;
+    size_t width;
 };
 
 void pushFront(StackNode **Node, RBNode_t *value);
