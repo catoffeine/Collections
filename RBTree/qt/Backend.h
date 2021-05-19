@@ -13,7 +13,19 @@ struct TreeWidth;
 void buildTree(const RBNode_t *Node, long long index, void *state);
 size_t calcHeightY(const RBNode_t *nodeToAdd);
 struct StackNode;
-struct StateForWidthCalc;
+
+struct RunOverTheTreeData {
+    const size_t *y_lvl_cur;
+};
+
+struct StateForWidthCalc {
+    RunOverTheTreeData rdata;
+    StackNode *top = nullptr;
+    size_t size = 0;
+    size_t minWidth = 0;
+//    QPainter *painter;
+    size_t r = 0;
+};
 
 class Backend : public QWidget {
     Q_OBJECT
@@ -23,7 +35,7 @@ class Backend : public QWidget {
     int ERROR_CODE;
     long long additingValue;
     TreeWidth *trW;
-    StateForWidthCalc *stateFWCalc;
+    StateForWidthCalc stateFWCalc;
 
     QTextEdit *qte;
 public:
@@ -48,17 +60,19 @@ struct TreeWidth {
     long long size;
 };
 
-struct StateForWidthCalc {
-    StackNode *top;
-    size_t size;
-    size_t minWidth;
-    QPainter *painter;
-};
 
 struct StackNode {
     const RBNode_t *nodePtr;
     StackNode *previous;
-    size_t width;
+    size_t width = 0;
+    size_t x = 0, y = 0;
+};
+
+struct ListNode {
+    ListNode *right = nullptr;
+    ListNode *left = nullptr;
+    RBNode_t *value = nullptr;
+    size_t index = 0;
 };
 
 void pushFront(StackNode **Node, RBNode_t *value);

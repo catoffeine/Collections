@@ -19,7 +19,7 @@
 
 #endif
 
-int nodeColor(RBNode_t *Node) {
+int nodeColor(const RBNode_t *Node) {
     if (!Node) return BLACK;
     if (Node->color) return RED;
     else return BLACK;
