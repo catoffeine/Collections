@@ -71,7 +71,7 @@ struct StackNode {
 struct ListNode {
     ListNode *right = nullptr;
     ListNode *left = nullptr;
-    RBNode_t *value = nullptr;
+    const RBNode_t *value = nullptr;
     size_t index = 0;
 };
 

@@ -12,6 +12,20 @@ static inline size_t unwrap_or(const void *const ptr, size_t ofst, size_t defaul
     return (ptr ? (*(size_t*)(((char*)ptr) + ofst)) : default_value);
 }
 
+void printStateNodes(StateForWidthCalc *stateFWCalc) {
+    StackNode *p{0};
+    if (!stateFWCalc) {
+        return;   
+    }
+    p = stateFWCalc->top;
+    qDebug() << "________________________________________";
+    while (p) {
+        qDebug() << "RBNode_t's value: " << p->nodePtr->value;
+        qDebug() << "StackNode's width position: " << p->width;
+        p = p->previous;
+    }
+    qDebug() << "________________________________________";
+}
 void calcWidthX(const RBNode_t *node, void* state) {
     StateForWidthCalc *st = (StateForWidthCalc*)state;
     if (!st) return;    
@@ -122,12 +136,23 @@ void pushFront(ListNode **Node, RBNode_t *value) {
     }
 }
 
-RBNode_t* popFront(ListNode **Node) {
+const RBNode_t* popFront(ListNode **Node) {
     if (!Node || !*Node) return nullptr;
     ListNode *nodeToDelete = *Node;
-    RBNode_t *delValue = nodeToDelete->value;
+    const RBNode_t *delValue = nodeToDelete->value;
     *Node = (*Node)->right;
     if (*Node) (*Node)->left = nullptr;
+    delete nodeToDelete;
+    return delValue;
+}
+
+const RBNode_t *popBack(ListNode **Node) {
+    if (!Node || !*Node) return nullptr;
+    ListNode *nodeToDelete = *Node;
+    while (nodeToDelete->right) nodeToDelete = nodeToDelete->right; 
+    const RBNode_t *delValue = nodeToDelete->value;
+    if (nodeToDelete->left) nodeToDelete->left->right = nullptr;
+    else *Node = nullptr;
     delete nodeToDelete;
     return delValue;
 }
@@ -137,13 +162,12 @@ void runWidthTheTree(RBNode_t *root, void(*func)(const RBNode_t *Node, void *sta
     ListNode *Node{nullptr};
     try {
         pushFront(&Node, root);
-        while (Node->index) {
-            RBNode_t *rbNode = popFront(&Node);
+        while (Node) {
+            const RBNode_t *rbNode = popBack(&Node);
             func(rbNode, state);
             if (rbNode->left) pushFront(&Node, rbNode->left);
             if (rbNode->right) pushFront(&Node, rbNode->right);
         }
-        popFront(&Node);
     } catch(const std::exception &ex) {
        qDebug() << ex.what(); 
     }
@@ -239,13 +263,16 @@ void Backend::paintEvent(QPaintEvent *ev) {
 
         stateFWCalc.r = 50*factor;
         runOverTheTree(rbroot, calcWidthX, &stateFWCalc);
+        printStateNodes(&stateFWCalc);
         runWidthTheTree(rbroot, calcShiftX, &stateFWCalc);
         
         StackNode *tmp = stateFWCalc.top;
 
         size_t addWidth = width()/2;
 
-        while (tmp->previous) {
+
+        while (tmp) {
+            QPainterPtr->setPen(QPen(Qt::white, 2, Qt::SolidLine, Qt::FlatCap));
             if (nodeColor(tmp->nodePtr)) QPainterPtr->setBrush(QBrush(Qt::red, Qt::SolidPattern));
             else QPainterPtr->setBrush(QBrush(Qt::black, Qt::SolidPattern));
             QPainterPtr->drawEllipse(tmp->x + addWidth, tmp->y * 5, stateFWCalc.r, stateFWCalc.r);
@@ -267,9 +294,8 @@ void Backend::paintEvent(QPaintEvent *ev) {
 //        else st->painter->setBrush(QBrush(Qt::black, Qt::SolidPattern));
 //        st->painter->drawEllipse(xShift, yHeight*yHFactor, r, r);
 //        st->painter->drawText(xShift+r/2, yHeight*yHFactor+r/2, QString::number(node->value));
-
     }
-
+    QPainterPtr->end();
 }
 
 void Backend::doubleFactor() {
