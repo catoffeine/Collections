@@ -36,6 +36,7 @@ class Backend : public QWidget {
     long long additingValue;
     TreeWidth *trW;
     StateForWidthCalc stateFWCalc;
+    bool treeChanged;
 
     QTextEdit *qte;
 public:
@@ -51,6 +52,7 @@ public slots:
 
 void SN_push(StackNode **Node, const RBNode_t *value);
 const StackNode* SN_find(const StackNode *top, const RBNode_t *node);
+StackNode* SN_find_rw(StackNode *top, const RBNode_t *node);
 
 struct TreeWidth {
     StackNode *stack;

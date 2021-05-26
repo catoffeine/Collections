@@ -22,6 +22,7 @@ void printStateNodes(StateForWidthCalc *stateFWCalc) {
     while (p) {
         qDebug() << "RBNode_t's value: " << p->nodePtr->value;
         qDebug() << "StackNode's width position: " << p->width;
+        qDebug() << "StackNode's Y position: " << stateFWCalc->top->y;
         p = p->previous;
     }
     qDebug() << "________________________________________";
@@ -29,11 +30,19 @@ void printStateNodes(StateForWidthCalc *stateFWCalc) {
 void calcWidthX(const RBNode_t *node, void* state) {
     StateForWidthCalc *st = (StateForWidthCalc*)state;
     if (!st) return;    
+    if (st->top) {
+        size_t ofst = offsetof(StackNode, width);
+        st->top->width = 2*st->r+2*std::max(unwrap_or(SN_find(st->top, node->left), ofst, st->minWidth), unwrap_or(SN_find(st->top, node->right), ofst, st->minWidth));
+    }
+    if (st->top && SN_find_rw(st->top, node)) {
+        return;
+    }
     SN_push(&(st->top), node);
     size_t ofst = offsetof(StackNode, width);
-    st->top->width = 2*st->r +  2*std::max(unwrap_or(SN_find(st->top, node->left), ofst, st->minWidth), unwrap_or(SN_find(st->top, node->right), ofst, st->minWidth));
+    st->top->width = 2*st->r+2*std::max(unwrap_or(SN_find(st->top, node->left), ofst, st->minWidth), unwrap_or(SN_find(st->top, node->right), ofst, st->minWidth));
     
-    st->top->y = *st->rdata.y_lvl_cur;
+    qDebug() << "st->top->width: " << st->top->width;
+    st->top->y = *(st->rdata.y_lvl_cur) + 1;
 }
 
 size_t calcHeightY(const RBNode_t *nodeToAdd) {
@@ -65,7 +74,6 @@ void runOverTheTree(RBNode_t *root, void(*func)(const RBNode_t *Node, void* stat
     if (!root) {
         return;
     }
-
 //    if (state) {*(size_t**)state = &y_lvl;}
 
     RunOverTheTreeData *st = (RunOverTheTreeData*)(state);
@@ -98,7 +106,7 @@ void SN_push(StackNode **Node, const RBNode_t *value) {
         *Node = new StackNode;
         (*Node)->nodePtr = value;
         (*Node)->previous = nullptr;
-        (*Node)->width = 20; //минимальная ширина
+        (*Node)->width = 5; //минимальная ширина
     } else {
         StackNode *newNode = new StackNode;
         newNode->nodePtr = value;
@@ -134,16 +142,6 @@ void pushFront(ListNode **Node, RBNode_t *value) {
         (*Node)->left = newNode; 
         *Node = newNode;
     }
-}
-
-const RBNode_t* popFront(ListNode **Node) {
-    if (!Node || !*Node) return nullptr;
-    ListNode *nodeToDelete = *Node;
-    const RBNode_t *delValue = nodeToDelete->value;
-    *Node = (*Node)->right;
-    if (*Node) (*Node)->left = nullptr;
-    delete nodeToDelete;
-    return delValue;
 }
 
 const RBNode_t *popBack(ListNode **Node) {
@@ -183,22 +181,24 @@ void calcShiftX(const RBNode_t *root, void *state) {
     }
 
     p = SN_find_rw(st->top, rbNode);
-    if (!p->nodePtr->parent) st->top->x = 0;
+    if (!p->nodePtr->parent) { st->top->x = 0; }
     else {
         snParent = SN_find_rw(st->top, rbNode->parent);
-        if (snParent->nodePtr->parent->left == snParent->nodePtr) {
+        if (snParent->nodePtr->right == snParent->nodePtr) {
             p->x = snParent->x - snParent->width; 
         } else {
             p->x = snParent->x + snParent->width;
         }
+        qDebug() << "snParent->width: " << snParent->width << ", function: " << __FUNCTION__;
+        qDebug() << "p->x: " << p->x << ", function: " << __FUNCTION__;
     }
 }
 
-Backend::Backend(QWidget *parent): QWidget(parent), factor{1}, rbroot{nullptr} {
+Backend::Backend(QWidget *parent): QWidget(parent), factor{1}, rbroot{nullptr}, ERROR_CODE{0}, treeChanged{false} {
 //    addValue(&rbroot, );
                
     trW = new TreeWidth;
-    stateFWCalc.minWidth = 20; //минимальная ширина
+    stateFWCalc.minWidth = 5; //минимальная ширина
 
     QWidget *wgt = new QWidget(this);
     wgt->resize(200, 200);
@@ -262,24 +262,26 @@ void Backend::paintEvent(QPaintEvent *ev) {
 //        double y = (height() - r)/2;
 
         stateFWCalc.r = 50*factor;
-        runOverTheTree(rbroot, calcWidthX, &stateFWCalc);
-        printStateNodes(&stateFWCalc);
-        runWidthTheTree(rbroot, calcShiftX, &stateFWCalc);
+        if (treeChanged) {
+            runOverTheTree(rbroot, calcWidthX, &stateFWCalc); 
+            printStateNodes(&stateFWCalc);
+            runWidthTheTree(rbroot, calcShiftX, &stateFWCalc);
+        }
         
         StackNode *tmp = stateFWCalc.top;
 
         size_t addWidth = width()/2;
 
-
         while (tmp) {
             QPainterPtr->setPen(QPen(Qt::white, 2, Qt::SolidLine, Qt::FlatCap));
             if (nodeColor(tmp->nodePtr)) QPainterPtr->setBrush(QBrush(Qt::red, Qt::SolidPattern));
             else QPainterPtr->setBrush(QBrush(Qt::black, Qt::SolidPattern));
-            QPainterPtr->drawEllipse(tmp->x + addWidth, tmp->y * 5, stateFWCalc.r, stateFWCalc.r);
-            QPainterPtr->drawText(tmp->x + addWidth, tmp->y * 5, QString::number(tmp->nodePtr->value));
+            QPainterPtr->drawEllipse(tmp->x + addWidth, tmp->y * 15, stateFWCalc.r, stateFWCalc.r);
+            //QPainterPtr->drawText(tmp->x + addWidth, tmp->y * 5, QString::number(tmp->nodePtr->value));
+            QPainterPtr->drawText(tmp->x + addWidth + stateFWCalc.r/2, tmp->y * 15 + stateFWCalc.r/2, QString::number(tmp->nodePtr->value)); 
             tmp = tmp->previous;
         }
-        
+
 //
 //        size_t yHeight = calcHeightY(st->top->nodePtr);
 //        size_t yHFactor = 10;
@@ -296,6 +298,7 @@ void Backend::paintEvent(QPaintEvent *ev) {
 //        st->painter->drawText(xShift+r/2, yHeight*yHFactor+r/2, QString::number(node->value));
     }
     QPainterPtr->end();
+    treeChanged = false;
 }
 
 void Backend::doubleFactor() {
@@ -310,7 +313,13 @@ void Backend::ButtonOnClick(QString str) {
 
 void Backend::slotAddValue() {
     additingValue = qte->toPlainText().trimmed().toLongLong();
-    addValue(&rbroot, additingValue, &ERROR_CODE);
+    RBNode_t *tmp = addValue(&rbroot, additingValue, &ERROR_CODE);
+    if (tmp){
+        treeChanged = true;
+        qDebug() << "treeChanged is set true";
+    } else {
+        qDebug() << "addValue returned null";
+    }
     //runWidthTheTree(rbroot, buildTree, trW);
     //runOverTheTree(rbroot, something, trW);
     repaint();
