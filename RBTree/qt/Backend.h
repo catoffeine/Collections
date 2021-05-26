@@ -30,6 +30,7 @@ struct StateForWidthCalc {
 class Backend : public QWidget {
     Q_OBJECT
     double factor;
+    double factorX;
 
     RBNode_t *rbroot;
     int ERROR_CODE;
@@ -47,12 +48,16 @@ public:
 public slots:
     void ButtonOnClick(QString str);
     void doubleFactor();
+    void halfFactorX();
     void slotAddValue();
 };
+
 
 void SN_push(StackNode **Node, const RBNode_t *value);
 const StackNode* SN_find(const StackNode *top, const RBNode_t *node);
 StackNode* SN_find_rw(StackNode *top, const RBNode_t *node);
+
+void freeStackNodes(StateForWidthCalc *state);
 
 struct TreeWidth {
     StackNode *stack;
@@ -77,5 +82,6 @@ struct ListNode {
     size_t index = 0;
 };
 
-void pushFront(StackNode **Node, RBNode_t *value);
-RBNode_t* popFront(StackNode **Node);
+void printList(const ListNode *Node);
+void pushFront(ListNode **Node, RBNode_t *value);
+const RBNode_t *popBack(ListNode **Node);

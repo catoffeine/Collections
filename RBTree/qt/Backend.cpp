@@ -22,21 +22,36 @@ void printStateNodes(StateForWidthCalc *stateFWCalc) {
     while (p) {
         qDebug() << "RBNode_t's value: " << p->nodePtr->value;
         qDebug() << "StackNode's width position: " << p->width;
-        qDebug() << "StackNode's Y position: " << stateFWCalc->top->y;
+        qDebug() << "StackNode's Y position: " << p->y;
         p = p->previous;
     }
     qDebug() << "________________________________________";
 }
+
+void freeStackNodes(StateForWidthCalc *state) {
+    StackNode *p = NULL;
+    StackNode *tmp = NULL;
+    if (!state || !state->top) return;
+    p = state->top;
+    while (p) {
+       tmp = p->previous;
+       free(p);
+       p = tmp;
+    }
+    state->top = NULL;
+}
+
 void calcWidthX(const RBNode_t *node, void* state) {
     StateForWidthCalc *st = (StateForWidthCalc*)state;
     if (!st) return;    
-    if (st->top) {
-        size_t ofst = offsetof(StackNode, width);
-        st->top->width = 2*st->r+2*std::max(unwrap_or(SN_find(st->top, node->left), ofst, st->minWidth), unwrap_or(SN_find(st->top, node->right), ofst, st->minWidth));
-    }
-    if (st->top && SN_find_rw(st->top, node)) {
-        return;
-    }
+//    if (st->top) {
+//        size_t ofst = offsetof(StackNode, width);
+//        st->top->width = 2*st->r+2*std::max(unwrap_or(SN_find(st->top, node->left), ofst, st->minWidth), unwrap_or(SN_find(st->top, node->right), ofst, st->minWidth));
+//    }
+//    if (st->top && SN_find(st->top, node)) {
+//        st->top->y = *(st->rdata.y_lvl_cur) + 1;
+//        return;
+//    }
     SN_push(&(st->top), node);
     size_t ofst = offsetof(StackNode, width);
     st->top->width = 2*st->r+2*std::max(unwrap_or(SN_find(st->top, node->left), ofst, st->minWidth), unwrap_or(SN_find(st->top, node->right), ofst, st->minWidth));
@@ -83,6 +98,7 @@ void runOverTheTree(RBNode_t *root, void(*func)(const RBNode_t *Node, void* stat
     runOverTheTree(root->left, func, state);
     runOverTheTree(root->right, func, state);
     y_lvl--;
+    qDebug() << "y_lvl is " << y_lvl;
     func(root, state);
 }
 
@@ -106,11 +122,12 @@ void SN_push(StackNode **Node, const RBNode_t *value) {
         *Node = new StackNode;
         (*Node)->nodePtr = value;
         (*Node)->previous = nullptr;
-        (*Node)->width = 5; //минимальная ширина
+        (*Node)->width = 0; //минимальная ширина
     } else {
         StackNode *newNode = new StackNode;
         newNode->nodePtr = value;
         newNode->previous = *Node;
+        newNode->width = 0;
         *Node = newNode;
     }
 }
@@ -154,6 +171,14 @@ const RBNode_t *popBack(ListNode **Node) {
     delete nodeToDelete;
     return delValue;
 }
+void printList(const ListNode *Node) {
+    const ListNode *p = Node;
+    if (!Node) return;
+    while (p) {
+        qDebug() << "RBNode value is " << p->value->value;
+        p = p->right;
+    }
+}
 
 void runWidthTheTree(RBNode_t *root, void(*func)(const RBNode_t *Node, void *state), void *state) {
     long long index = 0;
@@ -161,6 +186,7 @@ void runWidthTheTree(RBNode_t *root, void(*func)(const RBNode_t *Node, void *sta
     try {
         pushFront(&Node, root);
         while (Node) {
+            printList(Node);
             const RBNode_t *rbNode = popBack(&Node);
             func(rbNode, state);
             if (rbNode->left) pushFront(&Node, rbNode->left);
@@ -179,22 +205,21 @@ void calcShiftX(const RBNode_t *root, void *state) {
     if (!root || !st) {
         throw;
     }
-
     p = SN_find_rw(st->top, rbNode);
     if (!p->nodePtr->parent) { st->top->x = 0; }
     else {
         snParent = SN_find_rw(st->top, rbNode->parent);
-        if (snParent->nodePtr->right == snParent->nodePtr) {
-            p->x = snParent->x - snParent->width; 
+        if (snParent->nodePtr->right == rbNode) {
+            p->x = snParent->x + snParent->width; 
         } else {
-            p->x = snParent->x + snParent->width;
+            p->x = snParent->x - snParent->width;
         }
         qDebug() << "snParent->width: " << snParent->width << ", function: " << __FUNCTION__;
-        qDebug() << "p->x: " << p->x << ", function: " << __FUNCTION__;
+        qDebug() << "p->x: " << (ssize_t)p->x << ", function: " << __FUNCTION__;
     }
 }
 
-Backend::Backend(QWidget *parent): QWidget(parent), factor{1}, rbroot{nullptr}, ERROR_CODE{0}, treeChanged{false} {
+Backend::Backend(QWidget *parent): QWidget(parent), factor{1}, factorX{1}, rbroot{nullptr}, ERROR_CODE{0}, treeChanged{false} {
 //    addValue(&rbroot, );
                
     trW = new TreeWidth;
@@ -208,31 +233,47 @@ Backend::Backend(QWidget *parent): QWidget(parent), factor{1}, rbroot{nullptr}, 
 //    QVBoxLayout *vlayout = new QVBoxLayout(wgt);
 
     QHBoxLayout *hlayout = new QHBoxLayout();
+    QHBoxLayout *hlayoutX = new QHBoxLayout();
 
     QPushButton *button1 = new QPushButton("double it");
     QObject::connect(button1, SIGNAL(clicked()), this, SLOT(doubleFactor()));
     QPushButton *button2 = new QPushButton("half it");
     QObject::connect(button2, &QPushButton::clicked, this, [&]() {factor /= 2; repaint();});
+    
+    QPushButton *halfX = new QPushButton("half x");
+    QObject::connect(halfX, SIGNAL(clicked()), this, SLOT(halfFactorX()));
 
     hlayout->addWidget(button1);
     hlayout->addWidget(button2);
 
+    hlayoutX->addWidget(halfX);
+
     gd->addLayout(hlayout, 0, 0, 1, 2);
+    gd->addLayout(hlayoutX, 1, 0, 1, 2);
 
 //    vlayout->addWidget(hlayout);
 
     qte = new QTextEdit();
     QObject::connect(qte, &QTextEdit::textChanged, this, [this](){qDebug() << qte->toPlainText();});
-    gd->addWidget(qte, 1, 0, 1, 2);
+    gd->addWidget(qte, 2, 0, 1, 2);
+
 
     QPushButton *buttonAddValue = new QPushButton("add value");
     QObject::connect(buttonAddValue, SIGNAL(clicked()), this, SLOT(slotAddValue()));
 
-    gd->addWidget(buttonAddValue, 2,0,1,2);
+    gd->addWidget(buttonAddValue, 3,0,1,2);
+
+    
 }
 
 Backend::~Backend() {
     free(rbroot);
+}
+
+void Backend::halfFactorX() {
+    factorX/=2;
+    treeChanged = true;
+    repaint();
 }
 
 
@@ -261,8 +302,11 @@ void Backend::paintEvent(QPaintEvent *ev) {
 //        double x = (width() - r)/2;
 //        double y = (height() - r)/2;
 
+
         stateFWCalc.r = 50*factor;
         if (treeChanged) {
+            freeStackNodes(&stateFWCalc);
+
             runOverTheTree(rbroot, calcWidthX, &stateFWCalc); 
             printStateNodes(&stateFWCalc);
             runWidthTheTree(rbroot, calcShiftX, &stateFWCalc);
@@ -271,14 +315,16 @@ void Backend::paintEvent(QPaintEvent *ev) {
         StackNode *tmp = stateFWCalc.top;
 
         size_t addWidth = width()/2;
+        size_t addHeight = 20;
 
         while (tmp) {
             QPainterPtr->setPen(QPen(Qt::white, 2, Qt::SolidLine, Qt::FlatCap));
             if (nodeColor(tmp->nodePtr)) QPainterPtr->setBrush(QBrush(Qt::red, Qt::SolidPattern));
             else QPainterPtr->setBrush(QBrush(Qt::black, Qt::SolidPattern));
-            QPainterPtr->drawEllipse(tmp->x + addWidth, tmp->y * 15, stateFWCalc.r, stateFWCalc.r);
+            qDebug() << "drawEllipse: x:" << (ssize_t)((ssize_t)tmp->x * factorX + addWidth) << ", y:" << tmp->y * 40 + addHeight << ", value: " << tmp->nodePtr->value;
+            QPainterPtr->drawEllipse((ssize_t)tmp->x * factorX + addWidth, tmp->y * 40 + addHeight, stateFWCalc.r, stateFWCalc.r);
             //QPainterPtr->drawText(tmp->x + addWidth, tmp->y * 5, QString::number(tmp->nodePtr->value));
-            QPainterPtr->drawText(tmp->x + addWidth + stateFWCalc.r/2, tmp->y * 15 + stateFWCalc.r/2, QString::number(tmp->nodePtr->value)); 
+            QPainterPtr->drawText((ssize_t)tmp->x * factorX + addWidth + stateFWCalc.r/2, tmp->y * 40 + stateFWCalc.r/2 + addHeight, QString::number(tmp->nodePtr->value)); 
             tmp = tmp->previous;
         }
 
@@ -311,14 +357,14 @@ void Backend::ButtonOnClick(QString str) {
     qDebug() << QStringLiteral("Button has been clicked and has received the following: ") << str << "\n";
 }
 
-void Backend::slotAddValue() {
-    additingValue = qte->toPlainText().trimmed().toLongLong();
+void Backend::slotAddValue() { additingValue = qte->toPlainText().trimmed().toLongLong();
     RBNode_t *tmp = addValue(&rbroot, additingValue, &ERROR_CODE);
     if (tmp){
         treeChanged = true;
         qDebug() << "treeChanged is set true";
     } else {
         qDebug() << "addValue returned null";
+        ERROR_CODE = 0;
     }
     //runWidthTheTree(rbroot, buildTree, trW);
     //runOverTheTree(rbroot, something, trW);
