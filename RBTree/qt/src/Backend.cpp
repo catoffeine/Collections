@@ -1,9 +1,9 @@
-#include <iostream>
-
+#include <iostream> 
 #include <QDebug>
 #include <QPushButton>
 #include <QBoxLayout>
 #include <QTextEdit>
+#include <string>
 
 #include "Backend.h"
 #include "../RBTree.h"
@@ -112,6 +112,7 @@ const StackNode* SN_find(const StackNode *top, const RBNode_t *node) {
 
 StackNode* SN_find_rw(StackNode *top, const RBNode_t *node) {
     StackNode *p = top; 
+    qDebug() << "StackNode *top is " << top << "\nRBNode_t node is " << node << "\n----------------------------\n";
     while (p && p->nodePtr != node) p = p->previous; 
     return p;
 }
@@ -324,6 +325,7 @@ void Backend::paintEvent(QPaintEvent *ev) {
         }
         
         StackNode *tmp = stateFWCalc.top;
+        StackNode *tmpTop = tmp;
         StackNode *tmpParent;
 
         size_t addWidth = width()/2;
@@ -334,14 +336,20 @@ void Backend::paintEvent(QPaintEvent *ev) {
             QPainterPtr->setPen(QPen(Qt::white, 2, Qt::SolidLine, Qt::FlatCap));
             if (nodeColor(tmp->nodePtr)) QPainterPtr->setBrush(QBrush(Qt::red, Qt::SolidPattern));
             else QPainterPtr->setBrush(QBrush(Qt::black, Qt::SolidPattern));
-//            QPainterPtr->drawLine((ssize_t)tmp->x * factorX + addWidth + stateFWCalc.r/2, tmp->y * heightFactor + addHeight, 
-//                    (ssize_t)tmpParent->x * factorX + addWidth + stateFWCalc.r/2, tmpParent->y * heightFactor + addHeight + stateFWCalc.r);
+            tmpParent = SN_find_rw(tmpTop, tmp->nodePtr->parent);
+            if (tmpParent) {
+                ssize_t x1 = (ssize_t)tmp->x * factorX + addWidth + stateFWCalc.r/2;
+                ssize_t y1 = (ssize_t)tmp->y * heightFactor + addHeight;
+                ssize_t x2 = (ssize_t)tmpParent->x * factorX + addWidth + stateFWCalc.r/2;
+                ssize_t y2 = (ssize_t)tmpParent->y * heightFactor + addHeight + stateFWCalc.r;
+                QPainterPtr->drawLine(x1, y1, x2, y2);
+                qDebug() << "x1, y1: " << x1 << ", " << y1 << "\nx2, y2: " << x2 << ", " << y2 << "\n";
+            } else qDebug() << "tmpParent hasn't founded";
 //            qDebug() << "drawEllipse: x:" << (ssize_t)((ssize_t)tmp->x * factorX + addWidth) << ", y:" << tmp->y * heightFactor + addHeight << ", value: " << tmp->nodePtr->value;
             QPainterPtr->drawEllipse((ssize_t)tmp->x * factorX + addWidth, tmp->y * heightFactor + addHeight, stateFWCalc.r, stateFWCalc.r);
             //QPainterPtr->drawText(tmp->x + addWidth, tmp->y * 5, QString::number(tmp->nodePtr->value));
             QPainterPtr->drawText((ssize_t)tmp->x * factorX + addWidth + stateFWCalc.r/2, tmp->y * heightFactor + stateFWCalc.r/2 + addHeight, QString::number(tmp->nodePtr->value)); 
             tmp = tmp->previous;
-            tmpParent = tmp;
         }
 
 //
@@ -415,17 +423,40 @@ int * shiftArr(int *arr, int size, int index) {
 }
 
 void Backend::startTestAddValue() {
-    tmpValue = qte->toPlainText().trimmed().toLongLong();
+
+    int minD = 0, maxD = 0, splitInd = 0;
+    int isDip = 0;
+    std::string str = qte->toPlainText().trimmed().toUtf8().constData();
+    for (int i = 0; i < str.length(); i++) {
+       if (str[i] == ',') {
+          minD = std::stoi(str.data());
+          maxD = std::stoi(str.data() + i + 1);
+          isDip = 1;
+          break;
+       }
+    }
+
     int i = 0, randNum = 0, randInd = 0;
     int *numArr = 0, *numToDeleteArr = 0;
-    int size = qte->toPlainText().trimmed().toLongLong();
+    int size = 0;
     srand(time(NULL));
     numArr = (int*)malloc(size * sizeof(int));
     numToDeleteArr = (int*)malloc(size * sizeof(int));
+
+    qDebug() << "{minD, maxD} -> {" << minD << ", " << maxD << "}"; 
+
+    if (isDip) {
+       size = maxD-minD+1; 
+    } else {
+        size = qte->toPlainText().trimmed().toLongLong();
+        minD = 0;
+        maxD = size;
+    }
+
     RBNode_t *tmp = NULL;
     for (i = 0; i < size; i++) {
-        numArr[i] = i+1;
-        numToDeleteArr[i] = i+1;
+        numArr[i] = i+minD;
+        numToDeleteArr[i] = i+minD;
     }
 
     for (i = 0; i < size; i++) {

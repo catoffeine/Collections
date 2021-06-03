@@ -77,27 +77,7 @@ RBNode_t * addValue(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
         return NULL;
     }
     next = *root;
-    if (*root) {
-        do {
-            p = next;
-            if (value > next->value) {
-                if (!next->right) {
-                    isLeafLeft = 0;
-                    break;
-                }
-                next = next->right;
-            } else if (value < next->value) {
-                if (!next->left) {
-                    isLeafLeft = 1;
-                    break;
-                }
-                next = next->left;
-            } else {
-                *ERROR_CODE = 1; //Добавляемый элемент уже существует в дереве
-                return NULL;
-            }
-        } while(1);
-    } else {
+    if (!*root) {
         RBNode_t *newNode = (RBNode_t*)malloc(sizeof(RBNode_t));
         if (!newNode) {
             *ERROR_CODE = 2;
@@ -112,6 +92,25 @@ RBNode_t * addValue(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
         PRINT_IF_DBG(1, "END of function addValue");
         return newNode;
     }
+    do {
+        p = next;
+        if (value > next->value) {
+            if (!next->right) {
+                isLeafLeft = 0;
+                break;
+            }
+            next = next->right;
+        } else if (value < next->value) {
+            if (!next->left) {
+                isLeafLeft = 1;
+                break;
+            }
+            next = next->left;
+        } else {
+            *ERROR_CODE = 1; //Добавляемый элемент уже существует в дереве
+            return NULL;
+        }
+    } while(1);
     RBNode_t *newNode = (RBNode_t*)malloc(sizeof(RBNode_t));
     if (!newNode) {
         *ERROR_CODE = 2;

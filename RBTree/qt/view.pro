@@ -1,6 +1,10 @@
 TEMPLATE = app
 QT += qml quick widgets
-CONFIG += debug
-HEADERS = RBTree.h Backend.h
-SOURCES = main.cpp RBTree.c Backend.cpp
-RESOURCES = qml.qrc
+CONFIG += debug console
+INCLUDEPATH += include
+DESTDIR = build
+HEADERS = $$files(include/*.h, true)
+#include/RBTree.h include/Backend.h
+SOURCES = $$files(src/*.cpp, true) $$files(src/*.c, true)
+#main.cpp RBTree.c Backend.cpp
+#RESOURCES = qml.qrc
