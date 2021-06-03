@@ -242,7 +242,6 @@ void deleteNode(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
             blackDeleteBalanceTree(el, ERROR_CODE);
         }
         *root = findRoot(el);
-        if (*root == el) *root = NULL;
         free(el);
         el = NULL;
         PRINT_IF_DBG(1, "END function deleteNode");

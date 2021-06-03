@@ -34,7 +34,7 @@ class Backend : public QWidget {
 
     RBNode_t *rbroot;
     int ERROR_CODE;
-    long long additingValue;
+    long long tmpValue;
     TreeWidth *trW;
     StateForWidthCalc stateFWCalc;
     bool treeChanged;
@@ -50,6 +50,9 @@ public slots:
     void doubleFactor();
     void halfFactorX();
     void slotAddValue();
+    void slotDeleteValue();
+    void startTestAddValue();
+    void slotDeleteTree();
 };
 
 
