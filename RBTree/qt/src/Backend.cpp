@@ -112,7 +112,7 @@ const StackNode* SN_find(const StackNode *top, const RBNode_t *node) {
 
 StackNode* SN_find_rw(StackNode *top, const RBNode_t *node) {
     StackNode *p = top; 
-    qDebug() << "StackNode *top is " << top << "\nRBNode_t node is " << node << "\n----------------------------\n";
+    //qDebug() << "StackNode *top is " << top << "\nRBNode_t node is " << node << "\n----------------------------\n";
     while (p && p->nodePtr != node) p = p->previous; 
     return p;
 }
@@ -343,7 +343,7 @@ void Backend::paintEvent(QPaintEvent *ev) {
                 ssize_t x2 = (ssize_t)tmpParent->x * factorX + addWidth + stateFWCalc.r/2;
                 ssize_t y2 = (ssize_t)tmpParent->y * heightFactor + addHeight + stateFWCalc.r;
                 QPainterPtr->drawLine(x1, y1, x2, y2);
-                qDebug() << "x1, y1: " << x1 << ", " << y1 << "\nx2, y2: " << x2 << ", " << y2 << "\n";
+                //qDebug() << "x1, y1: " << x1 << ", " << y1 << "\nx2, y2: " << x2 << ", " << y2 << "\n";
             } else qDebug() << "tmpParent hasn't founded";
 //            qDebug() << "drawEllipse: x:" << (ssize_t)((ssize_t)tmp->x * factorX + addWidth) << ", y:" << tmp->y * heightFactor + addHeight << ", value: " << tmp->nodePtr->value;
             QPainterPtr->drawEllipse((ssize_t)tmp->x * factorX + addWidth, tmp->y * heightFactor + addHeight, stateFWCalc.r, stateFWCalc.r);
