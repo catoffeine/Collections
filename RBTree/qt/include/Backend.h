@@ -73,7 +73,7 @@ struct TreeWidth {
 
 struct StackNode {
     const RBNode_t *nodePtr;
-    StackNode *previous;
+    StackNode *previous = NULL;
     size_t width = 0;
     size_t x = 0, y = 0;
 };

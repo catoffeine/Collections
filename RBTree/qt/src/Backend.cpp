@@ -88,9 +88,12 @@ size_t calcHeightY(const RBNode_t *nodeToAdd) {
 
 void runOverTheTree(RBNode_t *root, void(*func)(const RBNode_t *Node, void* state), void* state) {
     static size_t y_lvl = 0;
+
     if (!root) {
         return;
     }
+
+    qDebug() << "runOverTheTree's called";
 //    if (state) {*(size_t**)state = &y_lvl;}
 
     RunOverTheTreeData *st = (RunOverTheTreeData*)(state);
@@ -106,7 +109,9 @@ void runOverTheTree(RBNode_t *root, void(*func)(const RBNode_t *Node, void* stat
 
 const StackNode* SN_find(const StackNode *top, const RBNode_t *node) {
     const StackNode *p = top; 
-    while (p && p->nodePtr != node) p = p->previous; 
+    while (p && p->nodePtr != node) {
+        p = p->previous; 
+    }
     return p;
 }
 
@@ -184,7 +189,6 @@ void printList(const ListNode *Node) {
 }
 
 void runWidthTheTree(RBNode_t *root, void(*func)(const RBNode_t *Node, void *state), void *state) {
-    long long index = 0;
     ListNode *Node{nullptr};
     try {
         pushFront(&Node, root);
@@ -344,7 +348,8 @@ void Backend::paintEvent(QPaintEvent *ev) {
                 ssize_t y2 = (ssize_t)tmpParent->y * heightFactor + addHeight + stateFWCalc.r;
                 QPainterPtr->drawLine(x1, y1, x2, y2);
                 //qDebug() << "x1, y1: " << x1 << ", " << y1 << "\nx2, y2: " << x2 << ", " << y2 << "\n";
-            } else qDebug() << "tmpParent hasn't founded";
+            } //else qDebug() << "tmpParent hasn't founded";
+
 //            qDebug() << "drawEllipse: x:" << (ssize_t)((ssize_t)tmp->x * factorX + addWidth) << ", y:" << tmp->y * heightFactor + addHeight << ", value: " << tmp->nodePtr->value;
             QPainterPtr->drawEllipse((ssize_t)tmp->x * factorX + addWidth, tmp->y * heightFactor + addHeight, stateFWCalc.r, stateFWCalc.r);
             //QPainterPtr->drawText(tmp->x + addWidth, tmp->y * 5, QString::number(tmp->nodePtr->value));
@@ -423,11 +428,10 @@ int * shiftArr(int *arr, int size, int index) {
 }
 
 void Backend::startTestAddValue() {
-
-    int minD = 0, maxD = 0, splitInd = 0;
+    int minD = 0, maxD = 0;
     int isDip = 0;
     std::string str = qte->toPlainText().trimmed().toUtf8().constData();
-    for (int i = 0; i < str.length(); i++) {
+    for (size_t i = 0; i < str.length(); i++) {
        if (str[i] == ',') {
           minD = std::stoi(str.data());
           maxD = std::stoi(str.data() + i + 1);
