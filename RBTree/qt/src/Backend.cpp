@@ -1,4 +1,8 @@
 #include <iostream> 
+#include <vector>
+#include <stack>
+#include <map>
+#include <random>
 #include <QDebug>
 #include <QPushButton>
 #include <QBoxLayout>
@@ -86,6 +90,71 @@ size_t calcHeightY(const RBNode_t *nodeToAdd) {
 //    qDebug() << QStringLiteral("treeW->tree[index]: ") << (treeW->tree)[index] << "\n"; 
 //}
 
+
+bool checkConsistencyOfTheTree(const RBNode_t *root) {
+    if (!root) return true;
+
+    if (root->parent) {
+        std::cout << "ERROR: root has parent: { root->value: " << root->value << ", root->parent->value: " << root->parent->value << std::endl;
+        return false;
+    }
+
+    std::stack<const RBNode_t *> v;
+    std::map<const RBNode_t *, int> m;
+
+    v.push(root);
+    m[root] = 0;
+
+    while (!v.empty()) {
+        const RBNode_t *cur = v.top();
+        if (cur->left) {
+            if (!m[cur]) {
+                if (cur->left->parent != cur) {
+                    std::cout << "ERROR: " << __PRETTY_FUNCTION__ << ": v.size() = " << v.size() << ": left has wrong parent" << std::endl;
+                    std::cout << "ERROR: " << "current value is " << cur->value << ", left value is " << cur->left->value << std::endl;
+                    std::cout << "ERROR: " << "current == current->left: " << (cur == cur->left) << std::endl;
+                    if (cur->left->parent) {
+                        std::cout << "ERROR: " << "left has parent, its value: " << cur->left->parent->value << std::endl;
+                    } else {
+                        std::cout << "ERROR: " << "left has no parent" << std::endl;
+                    }
+                    return false;
+                }
+                v.push(cur->left);
+                m[cur] = 1;
+                continue;
+            }
+        } else if (!m[cur]){
+            m[cur] = 1;
+        }
+        if (cur->right) {
+            if (m[cur] == 1) {
+                if (cur->right->parent != cur) {
+                    std::cout << "ERROR: " << __PRETTY_FUNCTION__ << ": v.size() = " << v.size() << ": right has wrong parent" << std::endl;
+                    std::cout << "ERROR: " << "current value is " << cur->value << ", right value is " << cur->right->value << std::endl;
+                    std::cout << "ERROR: " << "{current, current->right, current->right->par}\n" << "{" << cur << ", " << cur->right << ", " << cur->right->parent << "}" << std::endl;
+                    if (cur->right->parent) {
+                        std::cout << "ERROR: " << "right has parent, its value: " << cur->right->parent->value << std::endl;
+                    } else {
+                        std::cout << "ERROR: " << "right has no parent" << std::endl;
+                    }
+                    return false;
+                }
+                v.push(cur->right);
+                m[cur] = 2;
+                continue;
+            }
+        } else if (m[cur] == 1) {
+            m[cur] = 2;
+        }
+        if ((!cur->left && !cur->right) || m[cur] == 2) {
+            v.pop();
+        }
+    }
+
+    return true;
+}
+
 void runOverTheTree(RBNode_t *root, void(*func)(const RBNode_t *Node, void* state), void* state) {
     static size_t y_lvl = 0;
 
@@ -93,7 +162,7 @@ void runOverTheTree(RBNode_t *root, void(*func)(const RBNode_t *Node, void* stat
         return;
     }
 
-    qDebug() << "runOverTheTree's called";
+    //qDebug() << "runOverTheTree's called";
 //    if (state) {*(size_t**)state = &y_lvl;}
 
     RunOverTheTreeData *st = (RunOverTheTreeData*)(state);
@@ -399,6 +468,7 @@ void Backend::slotAddValue() {
     if (tmp){
         treeChanged = true;
         qDebug() << "treeChanged is set true";
+        qDebug() << "checkConsistencyOfTheTree(rbroot): " << checkConsistencyOfTheTree(rbroot);
     } else {
         qDebug() << "addValue returned null";
     }
@@ -423,7 +493,8 @@ void Backend::slotDeleteValue() {
 
 int * shiftArr(int *arr, int size, int index) {
     int i = index;
-    for (; i < size-1; i++) arr[i] = arr[i+1];
+    for (; i < size - 1; i++) arr[i] = arr[i + 1];
+//    for (i = index; i < size; i++) std::cout << arr[i] << " ";
     return arr;
 }
 
@@ -443,9 +514,8 @@ void Backend::startTestAddValue() {
     int i = 0, randNum = 0, randInd = 0;
     int *numArr = 0, *numToDeleteArr = 0;
     int size = 0;
-    srand(time(NULL));
-    numArr = (int*)malloc(size * sizeof(int));
-    numToDeleteArr = (int*)malloc(size * sizeof(int));
+    std::random_device rd;
+    std::mt19937 mersen(rd());
 
     qDebug() << "{minD, maxD} -> {" << minD << ", " << maxD << "}"; 
 
@@ -457,6 +527,9 @@ void Backend::startTestAddValue() {
         maxD = size;
     }
 
+    numArr = (int*)malloc(size * sizeof(int));
+    numToDeleteArr = (int*)malloc(size * sizeof(int));
+
     RBNode_t *tmp = NULL;
     for (i = 0; i < size; i++) {
         numArr[i] = i+minD;
@@ -465,14 +538,19 @@ void Backend::startTestAddValue() {
 
     for (i = 0; i < size; i++) {
         //sleep(1);
-        randInd = random() % (size - i);
+        if (size - i - 1 == 0) {
+            randInd = 0; 
+        } else {
+            randInd = mersen() % (size - i);
+        }
         randNum = numArr[randInd];
-        shiftArr(numArr, size, randInd);
+        shiftArr(numArr, size - i, randInd);
         tmp = addValue(&rbroot, randNum, &ERROR_CODE);
         //deleteNode(&rbroot, randNum, &ERROR_CODE);
         if (tmp){
             treeChanged = true;
-            qDebug() << "treeChanged is set true";
+//            qDebug() << "treeChanged is set true";
+//            qDebug() << "checkConsistencyOfTheTree(rbroot): " << checkConsistencyOfTheTree(rbroot);
         } else {
             qDebug() << "addValue returned null";
         }
