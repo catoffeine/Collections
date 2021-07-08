@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <vector>
 
 #include <QObject>
 #include <QWidget>
@@ -15,7 +16,7 @@ size_t calcHeightY(const RBNode_t *nodeToAdd);
 struct StackNode;
 
 struct RunOverTheTreeData {
-    const size_t *y_lvl_cur;
+    const size_t *y_lvl_cur = nullptr;
 };
 
 struct StateForWidthCalc {
@@ -29,17 +30,18 @@ struct StateForWidthCalc {
 
 class Backend : public QWidget {
     Q_OBJECT
-    double factor;
-    double factorX;
+    double factor {1};
+    double factorX {1};
 
-    RBNode_t *rbroot;
-    int ERROR_CODE;
-    long long tmpValue;
-    TreeWidth *trW;
+    RBNode_t *rbroot {nullptr};
+    int ERROR_CODE {0};
+    long long tmpValue {0};
+    TreeWidth *trW {NULL};
     StateForWidthCalc stateFWCalc;
-    bool treeChanged;
+    std::vector<RBNode_t*> treeBackup {};
+    bool treeChanged {false};
 
-    QTextEdit *qte;
+    QTextEdit *qte {nullptr};
 public:
     Backend(QWidget *parent = nullptr);
     ~Backend();
@@ -53,6 +55,8 @@ public slots:
     void slotAddValue();
     void slotDeleteValue();
     void startTestAddValue();
+    void slotSaveTree();
+    void slotRollBackTree();
     void slotDeleteTree();
 };
 
@@ -64,17 +68,17 @@ StackNode* SN_find_rw(StackNode *top, const RBNode_t *node);
 void freeStackNodes(StateForWidthCalc *state);
 
 struct TreeWidth {
-    StackNode *stack;
+    StackNode *stack = nullptr;
     long long w;
     long long value;
-    long long *tree;
+    long long *tree = nullptr;
     long long size;
 };
 
 
 struct StackNode {
-    const RBNode_t *nodePtr;
-    StackNode *previous = NULL;
+    const RBNode_t *nodePtr = nullptr;
+    StackNode *previous = nullptr;
     size_t width = 0;
     size_t x = 0, y = 0;
 };

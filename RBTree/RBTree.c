@@ -396,14 +396,14 @@ void deleteNode(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
     }
 
     if (!el->right && !el->left) { //Если отсутствуют потомки
-        if (nodeColor(el)) { //Если этот элемент - красный
-            if (el == *root) {
-                *ERROR_CODE = 8; //Корень не может быть красным
+        if (el == *root) {
+            if (nodeColor(el)) {
+                *ERROR_CODE = 8;
                 return;
+            } else { //Если этот элемент - черный 
+                blackDeleteBalanceTree(el, ERROR_CODE);
             }
-        } else {
-            blackDeleteBalanceTree(el, ERROR_CODE);
-        }
+        } 
         if (el != *root) {
             if (el->parent->left == el) el->parent->left = NULL;
             else el->parent->right = NULL;
@@ -471,7 +471,9 @@ void deleteNode(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
         } else { // Если красный - удаляем и меняем указатель на NULL;
             PRINT_IF_DBG(1, "both children exist, case RED right child");
             if (!p->parent) {
-                *root = NULL;
+                PRINT_IF_DBG(1, "ROOT IS RED, IMPOSSIBLE");
+                *ERROR_CODE = 8;
+                return;
             } else {
                 PRINT_IF_DBG(1, "case p->parent->right = NULL");
                 if (p->parent->left == p) p->parent->left = NULL;
@@ -668,3 +670,38 @@ void rightBigRotate(RBNode_t *Node, int *ERROR_CODE) {
 
     PRINT_IF_DBG(1, "END of function rightBigRotate");
 }
+
+RBNode_t* copyTreeFunc(const RBNode_t *node, int *ERROR_CODE) {
+    if (!node) return NULL;
+    RBNode_t *left = NULL, *right = NULL;
+
+    left = copyTreeFunc(node->left, ERROR_CODE);
+    if (!*ERROR_CODE) {
+        return NULL;
+    }
+    right = copyTreeFunc(node->right, ERROR_CODE);
+    if (!*ERROR_CODE) {
+        deleteTree(left);
+        return NULL;
+    }
+
+    RBNode_t *newNode = (RBNode_t*)malloc(sizeof(RBNode_t));
+    if (!newNode) {
+        deleteTree(left);
+        deleteTree(right);
+        *ERROR_CODE = 9;
+        return NULL;
+    }
+
+    newNode->parent = NULL;
+    newNode->left = left;
+    if (left) left->parent = newNode;
+    newNode->right = right;
+    if (right) right->parent = newNode;
+
+    newNode->value = node->value;
+    newNode->color = node->color;
+
+    return newNode;
+}
+

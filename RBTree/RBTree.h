@@ -32,6 +32,8 @@ void balanceTree(RBNode_t *el, int *ERROR_CODE);
 void leftBigRotate(RBNode_t *Node, int *ERROR_CODE);
 void rightBigRotate(RBNode_t *Node, int *ERROR_CODE);
 
+RBNode_t* copyTreeFunc(const RBNode_t *node, int *ERROR_CODE);
+
 #ifdef __cplusplus
 }
 

@@ -8,6 +8,7 @@
 #include <QBoxLayout>
 #include <QTextEdit>
 #include <string>
+#include <new>
 
 #include "Backend.h"
 #include "../RBTree.h"
@@ -295,7 +296,7 @@ void calcShiftX(const RBNode_t *root, void *state) {
     }
 }
 
-Backend::Backend(QWidget *parent): QWidget(parent), factor{1}, factorX{1}, rbroot{nullptr}, ERROR_CODE{0}, treeChanged{false} {
+Backend::Backend(QWidget *parent): QWidget(parent) {
 //    addValue(&rbroot, );
                
     trW = new TreeWidth;
@@ -350,8 +351,14 @@ Backend::Backend(QWidget *parent): QWidget(parent), factor{1}, factorX{1}, rbroo
     gd->addWidget(buttonAddValueTest, 6, 0, 1, 1);
 
     QPushButton *buttonDeleteTree = new QPushButton("delete tree");
+    QPushButton *buttonSaveTree = new QPushButton("saveTree");
+    QPushButton *buttonRollBackTree = new QPushButton("Roll back");
+    QObject::connect(buttonSaveTree, SIGNAL(clicked()), this, SLOT(slotSaveTree()));
     QObject::connect(buttonDeleteTree, SIGNAL(clicked()), this, SLOT(slotDeleteTree()));
+    QObject::connect(buttonRollBackTree, SIGNAL(clicked()), this, SLOT(slotRollBackTree()));
     gd->addWidget(buttonDeleteTree, 7, 0, 1, 2);
+    gd->addWidget(buttonSaveTree, 8, 0, 1, 1);
+    gd->addWidget(buttonRollBackTree, 8, 1, 1, 1);
     
 }
 
@@ -370,6 +377,24 @@ void Backend::doubleFactorX() {
     treeChanged = true;
     repaint();
 }
+
+
+void Backend::slotSaveTree() {
+    RBNode_t *cpRoot = copyTreeFunc(rbroot, &ERROR_CODE); 
+    if (ERROR_CODE) {
+        qDebug() << "ERROR: function copyTreeFunc returned ERROR_CODE " << ERROR_CODE; 
+    }
+    try {
+        treeBackup.emplace_back(cpRoot);
+    } catch (const std::exception &ex) {
+        qDebug() << "ERROR in vector: " << ex.what();
+    }
+}
+
+void Backend::slotRollBackTree() {
+    //
+}
+
 
 void Backend::paintEvent(QPaintEvent *ev) {
     Q_UNUSED(ev);
@@ -402,7 +427,7 @@ void Backend::paintEvent(QPaintEvent *ev) {
             freeStackNodes(&stateFWCalc);
 
             runOverTheTree(rbroot, calcWidthX, &stateFWCalc); 
-            printStateNodes(&stateFWCalc);
+//            printStateNodes(&stateFWCalc);
             runWidthTheTree(rbroot, calcShiftX, &stateFWCalc);
         }
         
