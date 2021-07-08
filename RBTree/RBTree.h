@@ -27,8 +27,8 @@ int nodeColor(const RBNode_t *Node);
 void deleteTree(RBNode_t *Node);
 
 void balanceTree(RBNode_t *el, int *ERROR_CODE);
-void leftSmallRotate(RBNode_t *Node, int *ERROR_CODE);
-void rightSmallRotate(RBNode_t *Node, int *ERROR_CODE);
+//void leftSmallRotate(RBNode_t *Node, int *ERROR_CODE);
+//void rightSmallRotate(RBNode_t *Node, int *ERROR_CODE);
 void leftBigRotate(RBNode_t *Node, int *ERROR_CODE);
 void rightBigRotate(RBNode_t *Node, int *ERROR_CODE);
 
