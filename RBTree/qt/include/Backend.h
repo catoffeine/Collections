@@ -49,6 +49,7 @@ public slots:
     void ButtonOnClick(QString str);
     void doubleFactor();
     void halfFactorX();
+    void doubleFactorX();
     void slotAddValue();
     void slotDeleteValue();
     void startTestAddValue();

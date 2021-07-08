@@ -299,7 +299,7 @@ Backend::Backend(QWidget *parent): QWidget(parent), factor{1}, factorX{1}, rbroo
 //    addValue(&rbroot, );
                
     trW = new TreeWidth;
-    stateFWCalc.minWidth = 5; //минимальная ширина
+    stateFWCalc.minWidth = 10; //минимальная ширина
 
     QWidget *wgt = new QWidget(this);
     wgt->resize(200, 300);
@@ -314,15 +314,19 @@ Backend::Backend(QWidget *parent): QWidget(parent), factor{1}, factorX{1}, rbroo
     QPushButton *button1 = new QPushButton("double it");
     QObject::connect(button1, SIGNAL(clicked()), this, SLOT(doubleFactor()));
     QPushButton *button2 = new QPushButton("half it");
-    QObject::connect(button2, &QPushButton::clicked, this, [&]() {factor /= 2; repaint();});
+    QObject::connect(button2, &QPushButton::clicked, this, [&]() {factor /= 1.5; treeChanged = true; repaint();});
     
     QPushButton *halfX = new QPushButton("half x");
     QObject::connect(halfX, SIGNAL(clicked()), this, SLOT(halfFactorX()));
+
+    QPushButton *doubleX = new QPushButton("double x");
+    QObject::connect(doubleX, SIGNAL(clicked()), this, SLOT(doubleFactorX()));
 
     hlayout->addWidget(button1);
     hlayout->addWidget(button2);
 
     hlayoutX->addWidget(halfX);
+    hlayoutX->addWidget(doubleX);
 
     gd->addLayout(hlayout, 0, 0, 1, 2);
     gd->addLayout(hlayoutX, 1, 0, 1, 2);
@@ -361,6 +365,11 @@ void Backend::halfFactorX() {
     repaint();
 }
 
+void Backend::doubleFactorX() {
+    factorX *= 2;
+    treeChanged = true;
+    repaint();
+}
 
 void Backend::paintEvent(QPaintEvent *ev) {
     Q_UNUSED(ev);
@@ -446,7 +455,7 @@ void Backend::paintEvent(QPaintEvent *ev) {
 
 void Backend::doubleFactor() {
     qDebug() << __FUNCTION__;
-    factor *= 2;
+    factor *= 1.5;
     repaint();
 }
 
