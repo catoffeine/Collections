@@ -38,8 +38,8 @@ int main (int argc, char *argv[]) {
 //    }
 //
 
-    Backend back;
-    back.resize(800, 480);
+    Backend back(app);
+    back.resize(1000, 600);
     back.show();
     return app.exec();
 }

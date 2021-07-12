@@ -557,36 +557,6 @@ void balanceTree(RBNode_t *el, int *ERROR_CODE) { //Предпологаем, ч
     }
 }
 
-//void leftSmallRotate(RBNode_t *Node, int *ERROR_CODE) {
-//    PRINT_IF_DBG(1, "BEGIN of function leftSmallRotate");
-//    if (!Node) {
-//        *ERROR_CODE = 3;
-//        return;
-//    }
-//
-//    Node->parent->left = Node->right; //Выставляем для отца левый элемент - правый сын данной ноды
-//    Node->right = Node->right->left; //Выставляем указатель для ноды на правого потомка в качетсве левого для правого бывшего потомка данной ноды (хз что тут написано)
-//    Node->parent->left->left = Node; //Выставляем уже для потомка отца указатель на левого сына (проверяемый элемент)
-//    Node->parent->left->parent = Node->parent; //Указываем новых родителей
-//    Node->parent = Node->parent->left; //Указываем новых родителей
-//    PRINT_IF_DBG(1, "END of function leftSmallRotate");
-//}
-
-//void rightSmallRotate(RBNode_t *Node, int *ERROR_CODE) {
-//    PRINT_IF_DBG(1, "BEGIN of function rightSmallRotate");
-//    if (!Node) {
-//        *ERROR_CODE = 3;
-//        return;
-//    }
-//
-//    Node->parent->right = Node->left; //Выставляем для отца правый элемент - левый сын данной ноды
-//    Node->left = Node->left->right;
-//    Node->parent->right->right = Node; //Выставляем уже для потомка отца указатель на правую ноду - проверяемый элемент
-//    Node->parent->right->parent = Node->parent; //Указываем новых родителей
-//    Node->parent = Node->parent->right;  //Указываем новых родителей
-//    PRINT_IF_DBG(1, "END of function rightSmallRotate");
-//}
-
 void leftBigRotate(RBNode_t *Node, int *ERROR_CODE) {
     PRINT_IF_DBG(1, "BEGIN of function leftBigRotate");
     RBNode_t *p = Node, *tmp = 0;
@@ -676,12 +646,14 @@ RBNode_t* copyTreeFunc(const RBNode_t *node, int *ERROR_CODE) {
     RBNode_t *left = NULL, *right = NULL;
 
     left = copyTreeFunc(node->left, ERROR_CODE);
-    if (!*ERROR_CODE) {
+    if (*ERROR_CODE) {
+        PRINT_EC
         return NULL;
     }
     right = copyTreeFunc(node->right, ERROR_CODE);
-    if (!*ERROR_CODE) {
+    if (*ERROR_CODE) {
         deleteTree(left);
+        PRINT_EC
         return NULL;
     }
 

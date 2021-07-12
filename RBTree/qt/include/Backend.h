@@ -4,10 +4,12 @@
 #include <vector>
 
 #include <QObject>
+#include <QApplication>
 #include <QWidget>
 #include <QPainter>
 #include <QString>
 #include <QTextEdit>
+#include <QPushButton>
 #include "../RBTree.h"
 
 struct TreeWidth;
@@ -30,9 +32,13 @@ struct StateForWidthCalc {
 
 class Backend : public QWidget {
     Q_OBJECT
+
+    QApplication &app;
+    QPushButton *exitButton {nullptr};
     double factor {1};
     double factorX {1};
 
+    std::vector<size_t> currentTree;
     RBNode_t *rbroot {nullptr};
     int ERROR_CODE {0};
     long long tmpValue {0};
@@ -40,26 +46,29 @@ class Backend : public QWidget {
     StateForWidthCalc stateFWCalc;
     std::vector<RBNode_t*> treeBackup {};
     bool treeChanged {false};
+    QLabel *previousAction;
+    QLabel nextAction;
 
     QTextEdit *qte {nullptr};
+    QTextEdit *numberOfTests {nullptr};
 public:
-    Backend(QWidget *parent = nullptr);
+    Backend(QApplication &_app, QWidget *parent = nullptr);
     ~Backend();
 
-    void paintEvent(QPaintEvent *ev) override;
+    virtual void paintEvent(QPaintEvent *ev) override;
+    virtual void resizeEvent(QResizeEvent *ev) override;
+    void fillVectorOfTree(const RBNode_t *node, void *smth);
 public slots:
-    void ButtonOnClick(QString str);
     void doubleFactor();
     void halfFactorX();
     void doubleFactorX();
     void slotAddValue();
     void slotDeleteValue();
-    void startTestAddValue();
+    void slotStartTest();
     void slotSaveTree();
     void slotRollBackTree();
     void slotDeleteTree();
 };
-
 
 void SN_push(StackNode **Node, const RBNode_t *value);
 const StackNode* SN_find(const StackNode *top, const RBNode_t *node);

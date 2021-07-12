@@ -7,8 +7,10 @@
 #include <QPushButton>
 #include <QBoxLayout>
 #include <QTextEdit>
+#include <QLabel>
 #include <string>
 #include <new>
+#include <cctype>
 
 #include "Backend.h"
 #include "../RBTree.h"
@@ -296,14 +298,15 @@ void calcShiftX(const RBNode_t *root, void *state) {
     }
 }
 
-Backend::Backend(QWidget *parent): QWidget(parent) {
+Backend::Backend(QApplication &_app, QWidget *parent): QWidget(parent), app{_app} {
 //    addValue(&rbroot, );
                
     trW = new TreeWidth;
     stateFWCalc.minWidth = 10; //минимальная ширина
 
     QWidget *wgt = new QWidget(this);
-    wgt->resize(200, 300);
+    //wgt->resize(200, auto);
+    wgt->setFixedWidth(200);
 
     QGridLayout *gd = new QGridLayout(wgt);
 
@@ -340,25 +343,54 @@ Backend::Backend(QWidget *parent): QWidget(parent) {
 
 
     QPushButton *buttonAddValue = new QPushButton("add value");
-    QPushButton *buttonAddValueTest = new QPushButton("start addValue tests");
+    QPushButton *buttonStartTest = new QPushButton("start tests");
     QObject::connect(buttonAddValue, SIGNAL(clicked()), this, SLOT(slotAddValue()));
-    QObject::connect(buttonAddValueTest, SIGNAL(clicked()), this, SLOT(startTestAddValue()));
+    QObject::connect(buttonStartTest, SIGNAL(clicked()), this, SLOT(slotStartTest()));
+    
+    numberOfTests = new QTextEdit();
+    numberOfTests->setPlaceholderText(QStringLiteral("tests number"));
+    numberOfTests->setFixedHeight((QFontMetrics(numberOfTests->currentFont()).lineSpacing())*2);
+    numberOfTests->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    numberOfTests->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
     QPushButton *buttonDeleteValue = new QPushButton("delete value");
     QObject::connect(buttonDeleteValue, SIGNAL(clicked()), this, SLOT(slotDeleteValue()));
 
     gd->addWidget(buttonAddValue, 5, 0, 1, 1);
     gd->addWidget(buttonDeleteValue, 5, 1, 1, 1);
-    gd->addWidget(buttonAddValueTest, 6, 0, 1, 1);
+    gd->addWidget(buttonStartTest, 6, 0, 1, 1);
+    gd->addWidget(numberOfTests, 6, 1, 1, 1);
 
     QPushButton *buttonDeleteTree = new QPushButton("delete tree");
     QPushButton *buttonSaveTree = new QPushButton("saveTree");
     QPushButton *buttonRollBackTree = new QPushButton("Roll back");
+
     QObject::connect(buttonSaveTree, SIGNAL(clicked()), this, SLOT(slotSaveTree()));
     QObject::connect(buttonDeleteTree, SIGNAL(clicked()), this, SLOT(slotDeleteTree()));
     QObject::connect(buttonRollBackTree, SIGNAL(clicked()), this, SLOT(slotRollBackTree()));
+
+    QPushButton *buttonHide = new QPushButton("hide");
+    QPushButton *buttonShow = new QPushButton("show", this);
+    buttonShow->hide();
+    QObject::connect(buttonHide, &QPushButton::clicked, this, [w = wgt, buttonShow]{w->hide(); buttonShow->show();});
+    QObject::connect(buttonShow, &QPushButton::clicked, this, [wgt, buttonShow]{buttonShow->hide(); wgt->show();});
+
+    previousAction= new QLabel();
+    nextAction = new QLabel();
+    previousAction->setText("actionPrev");
+    nextAction->setText("actionNext");
+    
     gd->addWidget(buttonDeleteTree, 7, 0, 1, 2);
     gd->addWidget(buttonSaveTree, 8, 0, 1, 1);
     gd->addWidget(buttonRollBackTree, 8, 1, 1, 1);
+    gd->addWidget(previousAction, 9, 0, 1, 1);
+    gd->addWidget(nextAction, 9, 1, 1, 1);
+
+    gd->addWidget(buttonHide, 10, 0, 1, 1);
+
+    exitButton = new QPushButton("exit", this);
+    exitButton->move(this->width() - exitButton->width(), 0);
+    QObject::connect(exitButton, &QPushButton::clicked, &app, &QCoreApplication::quit, Qt::QueuedConnection);
     
 }
 
@@ -389,12 +421,20 @@ void Backend::slotSaveTree() {
     } catch (const std::exception &ex) {
         qDebug() << "ERROR in vector: " << ex.what();
     }
+    qDebug() << "Saving tree completed succesefull";
+    qDebug() << "The added vertex address is " << treeBackup.back();
 }
 
 void Backend::slotRollBackTree() {
-    //
+    if (!rbroot || !treeBackup.size()) {
+        return;
+    }
+    deleteTree(rbroot);
+    rbroot = treeBackup.back();
+    treeBackup.pop_back();
+    treeChanged = true;
+    repaint();
 }
-
 
 void Backend::paintEvent(QPaintEvent *ev) {
     Q_UNUSED(ev);
@@ -404,24 +444,8 @@ void Backend::paintEvent(QPaintEvent *ev) {
 
     if (!rbroot) {
         QPainterPtr->eraseRect(0, 0, width(), height());
-//        double r = 50*factor;
-//        double x = (width() - r)/2;
-//        double y = (height() - r)/2;
-//
-//        QPainterPtr.setPen(QPen(Qt::white, 10, Qt::SolidLine, Qt::FlatCap));
-//        QPainterPtr.setBrush(QBrush(Qt::green, Qt::SolidPattern));
-//        QPainterPtr.drawEllipse(x, y, r, r);
-//        QPainterPtr.drawText(x, y, "Text 1");
-//        QPainterPtr.drawEllipse(x + r, y + r, r, r);
-//        QPainterPtr.drawText(x + r, y + r, "Text 2");
     } else {
         QPainterPtr->eraseRect(0, 0, width(), height());
-
-//        double r = 50*factor;
-//        double x = (width() - r)/2;
-//        double y = (height() - r)/2;
-
-
         stateFWCalc.r = 50*factor;
         if (treeChanged) {
             freeStackNodes(&stateFWCalc);
@@ -484,10 +508,6 @@ void Backend::doubleFactor() {
     repaint();
 }
 
-void Backend::ButtonOnClick(QString str) {
-    qDebug() << QStringLiteral("Button has been clicked and has received the following: ") << str << "\n";
-}
-
 void Backend::slotAddValue() { 
     tmpValue = qte->toPlainText().trimmed().toLongLong();
     RBNode_t *tmp = addValue(&rbroot, tmpValue, &ERROR_CODE);
@@ -531,83 +551,210 @@ int * shiftArr(int *arr, int size, int index) {
 //    for (i = index; i < size; i++) std::cout << arr[i] << " ";
     return arr;
 }
-
-void Backend::startTestAddValue() {
-    int minD = 0, maxD = 0;
-    int isDip = 0;
-    std::string str = qte->toPlainText().trimmed().toUtf8().constData();
-    for (size_t i = 0; i < str.length(); i++) {
-       if (str[i] == ',') {
-          minD = std::stoi(str.data());
-          maxD = std::stoi(str.data() + i + 1);
+void Backend::slotStartTest() {
+    int maxVertexes = 40;
+    int countOfTests = numberOfTests->toPlainText().trimmed().toLongLong();
+    if (numberOfTests->toPlainText().isEmpty()) {
+        qDebug() << "input count of Tests";
+        return;
+    }
+    int minD = 0, maxD = 0, isDip = 0, size = 0;
+    std::string inputStr = qte->toPlainText().trimmed().toUtf8().constData();
+    if (qte->toPlainText().isEmpty()) {
+        qDebug() << "input the range of the tests";
+        return;
+    }
+    for (size_t i = 0; i < inputStr.length(); i++) {
+       if (inputStr[i] == ',') {
+          minD = std::stoi(inputStr.data());
+          maxD = std::stoi(inputStr.data() + i + 1);
           isDip = 1;
           break;
        }
     }
 
-    int i = 0, randNum = 0, randInd = 0;
-    int *numArr = 0, *numToDeleteArr = 0;
-    int size = 0;
-    std::random_device rd;
-    std::mt19937 mersen(rd());
-
-    qDebug() << "{minD, maxD} -> {" << minD << ", " << maxD << "}"; 
-
     if (isDip) {
-       size = maxD-minD+1; 
+        size = maxD - minD + 1;
     } else {
-        size = qte->toPlainText().trimmed().toLongLong();
+        size = std::stoi(inputStr.data());
         minD = 0;
         maxD = size;
     }
+    
+    qDebug() << "{minD, maxD} -> {" << minD << ", " << maxD << "}"; 
 
-    numArr = (int*)malloc(size * sizeof(int));
-    numToDeleteArr = (int*)malloc(size * sizeof(int));
+    std::random_device rd;
+    std::mt19937 mersen(rd());
+    int randNum; RBNode_t *returnedValue;
 
-    RBNode_t *tmp = NULL;
-    for (i = 0; i < size; i++) {
-        numArr[i] = i+minD;
-        numToDeleteArr[i] = i+minD;
+    StackNode *p = stateFWCalc.top;
+    while (p) {
+        if (p->nodePtr) if (std::find(currentTree.begin(), currentTree.end(), p->nodePtr->value) == currentTree.end()) currentTree.push_back(p->nodePtr->value);
+        p = p->previous;
     }
 
-    for (i = 0; i < size; i++) {
-        //sleep(1);
-        if (size - i - 1 == 0) {
-            randInd = 0; 
+    float currentChance = currentTree.size() / (double)maxVertexes * 100; char isIncreased = 2;
+    std::string choice;
+     
+    while (countOfTests) {
+        std::cout << "currentTree: ";
+        std::copy(currentTree.begin(), currentTree.end(), std::ostream_iterator<size_t>(std::cout, " "));
+        std::cout << std::endl;
+        if (isIncreased == 1) {
+            qDebug() << "isIncreased is 1, increasing the chance...";
+            currentChance = currentTree.size() / (double)maxVertexes * 100;
+        } else if (isIncreased == 0) {
+            qDebug() << "isIncreased is 0, decreasing the chance...";
+            currentChance = currentTree.size() / (double)maxVertexes * 100;
+        }
+        std::cout << "currentChance is " << currentChance << std::endl;
+        float chance = mersen() % 100 + 1 + (float)((mersen() % 100 + 1) / 100.0); //генерирует шанс с дробной частью до 2 знаков после запятой
+        std::cout << "generated chance is " << chance << std::endl;
+        if (chance > currentChance) { 
+           randNum = mersen() % (maxD - minD) + minD; 
+           qDebug() << "RandNum to add was generated, it's " << randNum;
+           if (std::find(currentTree.begin(), currentTree.end(), randNum) == currentTree.end()) {
+                qDebug() << "no such value in the tree, additing value...";
+                if (treeBackup.size() > 100) {
+                     treeBackup.erase(treeBackup.begin());
+                }
+                slotSaveTree();
+                returnedValue = addValue(&rbroot, randNum, &ERROR_CODE); 
+                if (ERROR_CODE) {
+                    qDebug() << "addValue function has returned the ERROR_CODE " << ERROR_CODE;
+                    if (ERROR_CODE == 1) {
+                        qDebug() << "additing value is already is the tree";
+                    }
+                    qDebug() << "Do you want to continue? (y/n)";
+                    std::getline(std::cin, choice);
+                    if (std::tolower(choice[0]) == 'y') {isIncreased = 2; continue;}
+                    else { return; }
+                } else {
+                    treeChanged = true;
+                    repaint();
+                    qDebug() << "---------------\nadditing value completed succesefully\nnew node's value is " << returnedValue->value;
+                    std::cout << "new node parent's value is ";
+                    if (returnedValue->parent) std::cout << returnedValue->parent->value << std::endl;
+                    else std::cout << "<no parent>\n";
+                    std::cout << "new node left child's value is "; 
+                    if (returnedValue->left) std::cout << returnedValue->left->value << std::endl;
+                    else std::cout << "<no left child>\n";
+                    std::cout << "new node right child's value is "; 
+                    if (returnedValue->right) std::cout << returnedValue->right->value << std::endl; 
+                    else std::cout << "<no right child>\n";
+                    qDebug() << "---------------";
+                    currentTree.push_back(returnedValue->value);
+                    isIncreased = 1;
+                }
+           } else {
+                isIncreased = 2;
+           }
         } else {
-            randInd = mersen() % (size - i);
+           randNum = mersen() % currentTree.size(); 
+           qDebug() << "RandNum to delete was generated, it's " << randNum;
+           if (treeBackup.size() > 40) {
+                treeBackup.erase(treeBackup.begin());
+           }
+           slotSaveTree();
+        
+            deleteNode(&rbroot, currentTree[randNum], &ERROR_CODE); 
+            if (ERROR_CODE) {
+                qDebug() << "deleting function has returned the ERROR_CODE " << ERROR_CODE;
+                qDebug() << "Do you want to continue? (y/n)";
+                std::getline(std::cin, choice);
+                if (std::tolower(choice[0]) == 'y') {isIncreased = 2; continue;}
+                else {return;}
+            } else {
+                qDebug() << "---------------\ndeleting value completed succesefully\n----------------";
+                currentTree.erase(currentTree.begin() + randNum);
+                isIncreased = 0;
+            }
         }
-        randNum = numArr[randInd];
-        shiftArr(numArr, size - i, randInd);
-        tmp = addValue(&rbroot, randNum, &ERROR_CODE);
-        //deleteNode(&rbroot, randNum, &ERROR_CODE);
-        if (tmp){
-            treeChanged = true;
-//            qDebug() << "treeChanged is set true";
-//            qDebug() << "checkConsistencyOfTheTree(rbroot): " << checkConsistencyOfTheTree(rbroot);
-        } else {
-            qDebug() << "addValue returned null";
-        }
-        repaint();
-
-        if (ERROR_CODE) {
-            qDebug() << "function deleteNode returned ERROR_CODE " << ERROR_CODE;
-            qDebug() << "the value was " << tmpValue;
-            qDebug() << "ERROR_CODE will be changed to 0";
-            ERROR_CODE = 0;
-        }
-//        errorStr = checkErorCode(ERROR_CODE);
-//        if (errorStr != "OK") {
-//            fprintf(stderr, "Test №%d failed in addValue: %s\n", i+1, errorStr);
-//            return 0;
-//        }
-        qDebug() << "Test №" << i+1 << " passed (additing Value)";
+        countOfTests--;
     }
+
 }
+
+//void Backend::startTestAddValue() {
+//    int minD = 0, maxD = 0;
+//    int isDip = 0;
+//    std::string str = qte->toPlainText().trimmed().toUtf8().constData();
+//    for (size_t i = 0; i < str.length(); i++) {
+//       if (str[i] == ',') {
+//          minD = std::stoi(str.data());
+//          maxD = std::stoi(str.data() + i + 1);
+//          isDip = 1;
+//          break;
+//       }
+//    }
+//
+//    int i = 0, randNum = 0, randInd = 0;
+//    int *numArr = 0, *numToDeleteArr = 0;
+//    int size = 0;
+//    std::random_device rd;
+//    std::mt19937 mersen(rd());
+//
+//    qDebug() << "{minD, maxD} -> {" << minD << ", " << maxD << "}"; 
+//
+//    if (isDip) {
+//       size = maxD-minD+1; 
+//    } else {
+//        size = qte->toPlainText().trimmed().toLongLong();
+//        minD = 0;
+//        maxD = size;
+//    }
+//
+//    numArr = (int*)malloc(size * sizeof(int));
+//    numToDeleteArr = (int*)malloc(size * sizeof(int));
+//
+//    RBNode_t *tmp = NULL;
+//    for (i = 0; i < size; i++) {
+//        numArr[i] = i+minD;
+//        numToDeleteArr[i] = i+minD;
+//    }
+//
+//    for (i = 0; i < size; i++) {
+//        //sleep(1);
+//        if (size - i - 1 == 0) {
+//            randInd = 0; 
+//        } else {
+//            randInd = mersen() % (size - i);
+//        }
+//        randNum = numArr[randInd];
+//        shiftArr(numArr, size - i, randInd);
+//        tmp = addValue(&rbroot, randNum, &ERROR_CODE);
+//        //deleteNode(&rbroot, randNum, &ERROR_CODE);
+//        if (tmp){
+//            treeChanged = true;
+////            qDebug() << "treeChanged is set true";
+////            qDebug() << "checkConsistencyOfTheTree(rbroot): " << checkConsistencyOfTheTree(rbroot);
+//        } else {
+//            qDebug() << "addValue returned null";
+//        }
+//        repaint();
+//
+//        if (ERROR_CODE) {
+//            qDebug() << "function deleteNode returned ERROR_CODE " << ERROR_CODE;
+//            qDebug() << "the value was " << tmpValue;
+//            qDebug() << "ERROR_CODE will be changed to 0";
+//            ERROR_CODE = 0;
+//        }
+////        errorStr = checkErorCode(ERROR_CODE);
+////        if (errorStr != "OK") {
+////            fprintf(stderr, "Test №%d failed in addValue: %s\n", i+1, errorStr);
+////            return 0;
+////        }
+//        qDebug() << "Test №" << i+1 << " passed (additing Value)";
+//    }
+//}
 
 void Backend::slotDeleteTree() {
     deleteTree(rbroot);
     rbroot = NULL;
     treeChanged = true;
     repaint();
+}
+
+void Backend::resizeEvent(QResizeEvent *ev) {
+    exitButton->move(this->width() - exitButton->width(), 0);
 }
