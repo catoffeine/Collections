@@ -33,7 +33,7 @@ void deleteTree(RBNode_t *Node) {
 }
 
 RBNode_t * searchTree(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
-    RBNode_t *p = 0;
+    RBNode_t *p = NULL;
     if (!root || !*root) {
         PRINT_IF_DBG(1, "EXIT OF FUNCTION searchTree in the begining, because root or *root was nullptr");
         return NULL;
@@ -207,7 +207,7 @@ void blackDeleteBalanceTree(RBNode_t *Node, int *ERROR_CODE) {
                         } else if (nodeColor(Node->parent->right->right)) { // Правый внук - красный (левый неважно)
                             Node->parent->right->right->color = BLACK;
                             leftBigRotate(Node->parent, ERROR_CODE);
-                            if (*ERROR_CODE) {PRINT_EC return;}
+                            if (ERROR_CODE) {PRINT_EC return;} 
                         } else if(nodeColor(Node->parent->right->left)) { //Левый внук - красный
                             rightBigRotate(Node->parent->right, ERROR_CODE);
                             if (*ERROR_CODE) {PRINT_EC return;}

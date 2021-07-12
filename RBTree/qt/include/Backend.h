@@ -10,6 +10,7 @@
 #include <QString>
 #include <QTextEdit>
 #include <QPushButton>
+#include <QLabel>
 #include "../RBTree.h"
 
 struct TreeWidth;
@@ -47,7 +48,7 @@ class Backend : public QWidget {
     std::vector<RBNode_t*> treeBackup {};
     bool treeChanged {false};
     QLabel *previousAction;
-    QLabel nextAction;
+    QLabel *nextAction;
 
     QTextEdit *qte {nullptr};
     QTextEdit *numberOfTests {nullptr};
