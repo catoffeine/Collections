@@ -1,6 +1,6 @@
 TEMPLATE = app
 QT += qml quick widgets
-CONFIG += debug console
+CONFIG += release console
 INCLUDEPATH += include
 DESTDIR = build
 HEADERS = $$files(include/*.h, true)

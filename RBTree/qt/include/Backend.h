@@ -13,6 +13,7 @@
 #include <QLabel>
 #include "../RBTree.h"
 
+
 struct TreeWidth;
 void buildTree(const RBNode_t *Node, long long index, void *state);
 size_t calcHeightY(const RBNode_t *nodeToAdd);
@@ -47,18 +48,25 @@ class Backend : public QWidget {
     StateForWidthCalc stateFWCalc;
     std::vector<RBNode_t*> treeBackup {};
     bool treeChanged {false};
-    QLabel *previousAction;
-    QLabel *nextAction;
+    int currentState {-1};
 
     QTextEdit *qte {nullptr};
     QTextEdit *numberOfTests {nullptr};
+
+    QTextEdit *logger {nullptr};
+
+    //info about actions
+    RBNode_t *currentNode {nullptr};
+    bool isAdded = false;
 public:
     Backend(QApplication &_app, QWidget *parent = nullptr);
     ~Backend();
 
+    void errorHandle(int ERROR_CODE);
     virtual void paintEvent(QPaintEvent *ev) override;
     virtual void resizeEvent(QResizeEvent *ev) override;
     void fillVectorOfTree(const RBNode_t *node, void *smth);
+
 public slots:
     void doubleFactor();
     void halfFactorX();
@@ -69,6 +77,7 @@ public slots:
     void slotSaveTree();
     void slotRollBackTree();
     void slotDeleteTree();
+    void slotRollForwardTree();
 };
 
 void SN_push(StackNode **Node, const RBNode_t *value);
@@ -103,3 +112,5 @@ struct ListNode {
 void printList(const ListNode *Node);
 void pushFront(ListNode **Node, RBNode_t *value);
 const RBNode_t *popBack(ListNode **Node);
+
+bool checkConsistencyOfTheTree(const RBNode_t*);

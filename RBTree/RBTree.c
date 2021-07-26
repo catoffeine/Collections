@@ -5,7 +5,7 @@
 #define RED 1
 #define BLACK 0
 
-#define DBG
+//#define DBG
 
 #ifdef DBG
 
@@ -39,7 +39,7 @@ RBNode_t * searchTree(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
         return NULL;
     }
     #ifdef DBG
-        printf("function searchTree BEGIN, root's value is %lld, searching value is %lld", (*root)->value, value);
+        printf("function searchTree BEGIN, root's value is %lld, searching value is %lld\n", (*root)->value, value);
     #endif
     p = *root;
     do {
@@ -59,7 +59,7 @@ RBNode_t * searchTree(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
             p = p->left;
         } else {
             #ifdef DBG
-                printf("EXIT OF FUNCTION searchTree, value was founded, it's %lld", p->value);
+                printf("EXIT OF FUNCTION searchTree, value was founded, it's %lld\n", p->value);
             #endif
             return p;
         }
@@ -126,8 +126,8 @@ RBNode_t * addValue(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
     newNode->left = NULL;
     newNode->value = value;
 
-    if (isLeafLeft) { 
-        p->left = newNode; 
+    if (isLeafLeft) {
+        p->left = newNode;
         PRINT_IF_DBG(1, "addValue: isLeafLeft == true");
     } else {
         p->right = newNode;
@@ -135,9 +135,9 @@ RBNode_t * addValue(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
     }
 
     balanceTree(newNode, ERROR_CODE);
-    if (*ERROR_CODE) { 
+    if (*ERROR_CODE) {
         PRINT_EC
-        return NULL; 
+        return NULL;
     }
     *root = findRoot(newNode);
     PRINT_IF_DBG(1, "END of function addValue");
@@ -160,13 +160,13 @@ RBNode_t * addValue(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
 //        root->color = BLACK;
 //        return;
 //    }
-//    
+//
 //    if (Node->parent) { //Если существует родитель удаляемого элемента
 //        if (Node->parent->left == Node) {
 //           if (nodeColor(Node->parent->right)) { //Брат - красный
-//                
 //
-//            
+//
+//
 //           }
 //        }
 //    }
@@ -195,20 +195,28 @@ void blackDeleteBalanceTree(RBNode_t *Node, int *ERROR_CODE) {
     }
 
     if (nodeColor(Node)) return;
-    
+
     if (Node->parent) { //Если существует родитель удаляемого элемента
+        PRINT_IF_DBG(1, "PARENT EXIST");
         if (Node->parent->left == Node) { //Если удаляемый элемент находится слева
+            PRINT_IF_DBG(1, "NODE TO DELETE TO THE LEFT OF THE PARENT");
             if (Node->parent->right) { //Проверка на существование брата
+                PRINT_IF_DBG(1, "BROTHER EXIST");
                 if (nodeColor(Node->parent)) { //Если родитель - красный
+                    PRINT_IF_DBG(1, "PARENT IS RED");
                     if (!nodeColor(Node->parent->right)) { //Брат - черный
+                        PRINT_IF_DBG(1, "BROTHER IS BLACK");
                         if (!nodeColor(Node->parent->right->left) && !nodeColor(Node->parent->right->right)) { //внуки - черные
+                            PRINT_IF_DBG(1, "CASE BLACK GRANDCHILDREN");
                             Node->parent->color = BLACK;
                             Node->parent->right->color = RED;
                         } else if (nodeColor(Node->parent->right->right)) { // Правый внук - красный (левый неважно)
+                            PRINT_IF_DBG(1, "CASE RED RIGHT GRANDCHILD");
                             Node->parent->right->right->color = BLACK;
                             leftBigRotate(Node->parent, ERROR_CODE);
-                            if (ERROR_CODE) {PRINT_EC return;} 
+                            if (ERROR_CODE) {PRINT_EC return;}
                         } else if(nodeColor(Node->parent->right->left)) { //Левый внук - красный
+                            PRINT_IF_DBG(1, "CASE RED LEFT GRANDCHILD");
                             rightBigRotate(Node->parent->right, ERROR_CODE);
                             if (*ERROR_CODE) {PRINT_EC return;}
                             leftBigRotate(Node->parent, ERROR_CODE);
@@ -216,18 +224,23 @@ void blackDeleteBalanceTree(RBNode_t *Node, int *ERROR_CODE) {
                             Node->parent->parent->color = BLACK;
                             if (*ERROR_CODE) {PRINT_EC return;}
 //                            blackDeleteBalanceTree(Node->parent, ERROR_CODE);
-                        } 
+                        }
                     }
                 } else { //Если родитель - черный
+                    PRINT_IF_DBG(1, "PARENT IS BLACK");
                     if (nodeColor(Node->parent->right)) { // Брат - красный
+                        PRINT_IF_DBG(1, "BROTHER IS RED");
                         if (Node->parent->right->left) { //проверка на существование внука
+                            PRINT_IF_DBG(1, "GRANDCHILD EXIST");
                             if (!nodeColor(Node->parent->right->left->left) && !nodeColor(Node->parent->right->left->right)) { //Правнуки левого внука - черные
+                                PRINT_IF_DBG(1, "GREAT CRANDCHILDREN OF LEFT GRANDCHILD ARE BLACK");
                                 Node->parent->right->left->color = RED;
                                 leftBigRotate(Node->parent, ERROR_CODE);
                                 if (*ERROR_CODE) {PRINT_EC return;}
                                 Node->parent->color = BLACK;
                                 Node->parent->parent->color = BLACK;
-                            } else if (nodeColor(Node->parent->right->left->right) || nodeColor(Node->parent->right->left->left)) { //У левого внука правый правнук - красный
+                            } else if (nodeColor(Node->parent->right->left->right)) { //У левого внука правый правнук - красный
+                                PRINT_IF_DBG(1, "RIGHT GREAT CRANDCHILD OF LEFT GRANDCHILD IS RED");
                                 if (Node->parent->right->left->right) Node->parent->right->left->right->color = BLACK;
                                 rightBigRotate(Node->parent->right, ERROR_CODE);
                                 if (*ERROR_CODE) {PRINT_EC return;}
@@ -235,19 +248,33 @@ void blackDeleteBalanceTree(RBNode_t *Node, int *ERROR_CODE) {
                                 Node->parent->right->right->color = RED;
                                 leftBigRotate(Node->parent, ERROR_CODE);
                                 if (*ERROR_CODE) {PRINT_EC return;}
+                            } else if (nodeColor(Node->parent->right->left->left)) {//У левого внука левый правнук - красный
+                                PRINT_IF_DBG(1, "LEFT GREAT CRANDCHILD OF LEFT GRANDCHILD IS RED");
+                                leftBigRotate(Node->parent, ERROR_CODE);
+                                if (*ERROR_CODE) {PRINT_EC return;}
+                                rightBigRotate(Node->parent->right, ERROR_CODE);
+                                if (*ERROR_CODE) {PRINT_EC return;}
+                                leftBigRotate(Node->parent, ERROR_CODE);
+                                if (*ERROR_CODE) {PRINT_EC return;}
+                                Node->parent->color = RED;
+                                Node->parent->parent->color = BLACK;
                             }
                         }
                     } else { //брат - черный
+                        PRINT_IF_DBG(1, "BROTHER IS BLACK");
                         if (nodeColor(Node->parent->right->left)) { //Левый красный внук
+                            PRINT_IF_DBG(1, "LEFT GRANDCHILD IS RED");
                             Node->parent->right->left->color = BLACK;
                             rightBigRotate(Node->parent->right, ERROR_CODE);
                             if (*ERROR_CODE) {PRINT_EC return;}
                             leftBigRotate(Node->parent, ERROR_CODE);
                             if (*ERROR_CODE) {PRINT_EC return;}
                         } else if (!nodeColor(Node->parent->right->right) && !nodeColor(Node->parent->right->left)) { //Черные внуки
+                            PRINT_IF_DBG(1, "BLACK GRANDCHILDREN");
                             Node->parent->right->color = RED;
                             blackDeleteBalanceTree(Node->parent, ERROR_CODE);
                         } else if (nodeColor(Node->parent->right->right)) { //Правый красный внук
+                            PRINT_IF_DBG(1, "RIGHT GRANDHILD IS RED");
                             Node->parent->right->right->color = BLACK;
                             leftBigRotate(Node->parent, ERROR_CODE);
                             if (*ERROR_CODE) {PRINT_EC return;}
@@ -256,35 +283,47 @@ void blackDeleteBalanceTree(RBNode_t *Node, int *ERROR_CODE) {
                 } //Если родитель - черный
             } //Проверка на существование брата
         } else { //Если удаляемый элемент находится справа
+            PRINT_IF_DBG(1, "NODE TO DELETE TO THE RIGHT OF THE PARENT");
             if (Node->parent->left) { //Проверка на существование брата
+                PRINT_IF_DBG(1, "BROTHER EXIST");
                 if (nodeColor(Node->parent)) { //Если родитель - красный
+                    PRINT_IF_DBG(1, "PARENT IS RED");
                     if (!nodeColor(Node->parent->left)) { //Брат - черный
+                        PRINT_IF_DBG(1, "BROTHER IS BLACK");
                         if (!nodeColor(Node->parent->left->left) && !nodeColor(Node->parent->left->right)) { //внуки - черные
+                            PRINT_IF_DBG(1, "GRANDCHILDREN ARE BLACK");
                             Node->parent->color = BLACK;
                             Node->parent->left->color = RED;
                         } else if (nodeColor(Node->parent->left->left)) { // Левый внук - красный (правый неважно)
+                            PRINT_IF_DBG(1, "LEFT GRANDCHILD IS RED");
                             Node->parent->left->left->color = BLACK;
                             rightBigRotate(Node->parent, ERROR_CODE);
                             if (*ERROR_CODE) {PRINT_EC return;}
                         } else if(nodeColor(Node->parent->left->right)) {
+                            PRINT_IF_DBG(1, "RIGHT GRANDCHILD IS RED");
                             leftBigRotate(Node->parent->left, ERROR_CODE);
                             if (*ERROR_CODE) {PRINT_EC return;}
                             rightBigRotate(Node->parent, ERROR_CODE);
                             Node->parent->color = RED;
                             Node->parent->parent->color = BLACK;
                             if (*ERROR_CODE) {PRINT_EC return;}
-                        } 
+                        }
                     }
                 } else { //Если родитель - черный
+                    PRINT_IF_DBG(1, "PARENT IS BLACK");
                     if (nodeColor(Node->parent->left)) { // Брат - красный
+                        PRINT_IF_DBG(1, "BROTHER IS RED");
                         if (Node->parent->left->right) { //проверка на существование внука
+                            PRINT_IF_DBG(1, "GRANDCHILD EXIST");
                             if (!nodeColor(Node->parent->left->right->left) && !nodeColor(Node->parent->left->right->right)) { //Правнуки правого внука - черные
+                                PRINT_IF_DBG(1, "GREAT GRANDCHILDREN OF THE RIGHT GRANDCHILD ARE BLACK");
                                 Node->parent->left->right->color = RED;
                                 rightBigRotate(Node->parent, ERROR_CODE);
                                 if (*ERROR_CODE) {PRINT_EC return;}
                                 Node->parent->color = BLACK;
                                 Node->parent->parent->color = BLACK;
-                            } else if (nodeColor(Node->parent->left->right->left) || nodeColor(Node->parent->left->right->right)) { //У правого внука левый правнук - красный
+                            } else if (nodeColor(Node->parent->left->right->left)) { //У правого внука левый правнук - красный
+                                PRINT_IF_DBG(1, "LEFT GREAT GRANDCHILD OF THE RIGHT GRANDCHILD IS RED");
                                 if (Node->parent->left->right->left) Node->parent->left->right->left->color = BLACK;
                                 leftBigRotate(Node->parent->left, ERROR_CODE);
                                 if (*ERROR_CODE) {PRINT_EC return;}
@@ -292,20 +331,34 @@ void blackDeleteBalanceTree(RBNode_t *Node, int *ERROR_CODE) {
                                 Node->parent->left->left->color = RED;
                                 rightBigRotate(Node->parent, ERROR_CODE);
                                 if (*ERROR_CODE) {PRINT_EC return;}
-                            }
+                            } else if (nodeColor(Node->parent->left->right->right)) {//У правого внука правый правнук - красный
+                                    PRINT_IF_DBG(1, "RIGHT GREAT GRANDCHILD OF THE RIGHT GRANDCHILD IS RED");
+                                    rightBigRotate(Node->parent, ERROR_CODE);
+                                    if (*ERROR_CODE) {PRINT_EC return;}
+                                    leftBigRotate(Node->parent->left, ERROR_CODE);
+                                    if (*ERROR_CODE) {PRINT_EC return;}
+                                    rightBigRotate(Node->parent, ERROR_CODE);
+                                    if (*ERROR_CODE) {PRINT_EC return;}
+                                    Node->parent->color = RED;
+                                    Node->parent->parent->color = BLACK;
+                                }
                         }
                     } else { //брат - черный
+                        PRINT_IF_DBG(1, "BROTHER IS BLACK");
                         if (nodeColor(Node->parent->left->right)) { //Правый красный внук
+                            PRINT_IF_DBG(1, "RIGHT GRANDCHILD IS RED");
                             Node->parent->left->right->color = BLACK;
                             leftBigRotate(Node->parent->left, ERROR_CODE);
                             if (*ERROR_CODE) {PRINT_EC return;}
                             rightBigRotate(Node->parent, ERROR_CODE);
                             if (*ERROR_CODE) {PRINT_EC return;}
                         } else if (!nodeColor(Node->parent->left->right) && !nodeColor(Node->parent->left->left)) {
+                            PRINT_IF_DBG(1, "BLACK GRANDCHILDREN ARE BLACK");
                             Node->parent->left->color = RED;
                             blackDeleteBalanceTree(Node->parent, ERROR_CODE);
                         } else if (nodeColor(Node->parent->left->left)) { //Правый левый внук - красный
-                            Node->parent->left->left->color = BLACK; 
+                            PRINT_IF_DBG(1, "LEFT GRANDCHILD IS RED");
+                            Node->parent->left->left->color = BLACK;
                             rightBigRotate(Node->parent, ERROR_CODE);
                             if (!*ERROR_CODE) {PRINT_EC return;}
                         }
@@ -388,6 +441,7 @@ void deleteNode(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
         return;
     }
 
+    PRINT_IF_DBG(1, "searchTree next");
     el = searchTree(root, value, ERROR_CODE); //находим элемент, который собираемся удалять
     p = el;
     if (*ERROR_CODE) { //в случае возвращения ошибки делаем выход
@@ -400,11 +454,18 @@ void deleteNode(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
             if (nodeColor(el)) {
                 *ERROR_CODE = 8;
                 return;
-            } else { //Если этот элемент - черный 
+            } else { //Если этот элемент - черный
                 blackDeleteBalanceTree(el, ERROR_CODE);
             }
-        } 
+        }
         if (el != *root) {
+            if (!nodeColor(el)) {
+                blackDeleteBalanceTree(el, ERROR_CODE);
+                if (*ERROR_CODE) {
+                    PRINT_EC
+                    return;
+                }
+            }
             if (el->parent->left == el) el->parent->left = NULL;
             else el->parent->right = NULL;
             *root = findRoot(el);
@@ -453,19 +514,25 @@ void deleteNode(RBNode_t **root, RBNode_value_t value, int *ERROR_CODE) {
         if (!nodeColor(p)) { //Если удаляемый элемент - черный
             if (p->right) { //Если есть правый ребенок
                 PRINT_IF_DBG(nodeColor(el->right), "BLACK RIGHT SINGLE CHILD, IMPOSSIBLE")
+                PRINT_IF_DBG(1, "BOTH CHILDREN EXIST, DELETING ELEMENT IS BLACK, RIGHT CHILD EXIST");
                 p->value = p->right->value; //Присваиваем значение ребенка и удаляем ребенка
-                free(p->right);
-                p->right = NULL;
+                p = p->right;
+                p->parent->right = NULL;
             } else {
+                PRINT_IF_DBG(1, "BOTH CHILDREN EXIST, DELETING ELEMENT IS BLACK, RIGHT CHILD DOESNT EXIST");
                 blackDeleteBalanceTree(p, ERROR_CODE); //Вызываем балансировку от p
+                if (p->parent->right == p) p->parent->right = NULL;
+                else p->parent->left = NULL;
             }
-
-            if (p->parent->right == p) p->parent->right = NULL;
-            else p->parent->left = NULL;
 
             *root = findRoot(p);
 
+            #ifdef DBG
+                printf("p->parent->value is %lld\n", p->parent->value);
+                printf("p->value is %lld\n", p->value);
+            #endif
             free(p);
+            p = NULL;
             PRINT_IF_DBG(1, "END function deleteNode");
             return;
         } else { // Если красный - удаляем и меняем указатель на NULL;
@@ -633,7 +700,7 @@ void rightBigRotate(RBNode_t *Node, int *ERROR_CODE) {
     p->left = tmp; //Для данной ноды в качестве левого потомка указываем ранее запомненного правого потомка правой ноды
     if (p->left) p->left->parent = p;
     p = p->parent; //Перемещаем указатель на родителя элемента
-    
+
     tmpColor = p->color;
     p->color = p->right->color;
     p->right->color = tmpColor;
@@ -676,4 +743,3 @@ RBNode_t* copyTreeFunc(const RBNode_t *node, int *ERROR_CODE) {
 
     return newNode;
 }
-
